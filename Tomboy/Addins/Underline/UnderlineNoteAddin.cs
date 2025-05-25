@@ -1,7 +1,7 @@
 // Add an Underline item to the font styles menu.
 // (C) 2009 Mark Wakim <markwakim@gmail.com>, LGPL 2.1 or later.
 
-using Mono.Unix;
+using Tomboy.Compat;
 using System;
 using Gtk;
 using Tomboy;

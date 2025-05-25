@@ -1,9 +1,8 @@
-
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using Mono.Unix;
+using Tomboy.Compat;
 
 using Gtk;
 using Galago;

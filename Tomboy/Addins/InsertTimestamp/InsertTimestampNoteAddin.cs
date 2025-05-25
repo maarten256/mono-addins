@@ -4,7 +4,7 @@
 
 using System;
 
-using Mono.Unix;
+using Tomboy.Compat;
 
 namespace Tomboy.InsertTimestamp {
 	public class InsertTimestampNoteAddin : NoteAddin {

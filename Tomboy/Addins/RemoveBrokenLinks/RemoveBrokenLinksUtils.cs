@@ -2,13 +2,11 @@
 // (c) 2010 Alex Tereschenko <frozenblue@zoho.com>
 // LGPL 2.1 or later.
 
-
 using System;
 using System.Text.RegularExpressions;
 using Gtk;
-using Mono.Unix;
+using Tomboy.Compat;
 using Tomboy;
-
 
 namespace Tomboy.RemoveBrokenLinks
 {

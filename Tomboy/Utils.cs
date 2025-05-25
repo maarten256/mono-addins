@@ -9,30 +9,32 @@ using System.Threading;
 using System.IO;
 using System.Xml;
 
-using Mono.Unix;
+using Tomboy.Compat;
+using System.Threading.Tasks;
 
 namespace Tomboy
 {
 	public class GuiUtils
 	{
-		static void GetMenuPosition (Gtk.Menu menu,
-		                             out int  x,
-		                             out int  y,
-		                             out bool push_in)
+		static void GetMenuPosition(Gtk.Menu menu,
+									 out int x,
+									 out int y,
+									 out bool push_in)
 		{
 			if (menu.AttachWidget == null ||
-			    menu.AttachWidget.GdkWindow == null) {
+				menu.AttachWidget.GdkWindow == null)
+			{
 				// Prevent null exception in weird cases
 				x = 0;
 				y = 0;
 				push_in = true;
 				return;
 			}
-			
-			menu.AttachWidget.GdkWindow.GetOrigin (out x, out y);
+
+			menu.AttachWidget.GdkWindow.GetOrigin(out x, out y);
 			x += menu.AttachWidget.Allocation.X;
 
-			Gtk.Requisition menu_req = menu.SizeRequest ();
+			Gtk.Requisition menu_req = menu.SizeRequest();
 			if (y + menu_req.Height >= menu.AttachWidget.Screen.Height)
 				y -= menu_req.Height;
 			else
@@ -41,17 +43,17 @@ namespace Tomboy
 			push_in = true;
 		}
 
-		public static void DetachMenu (Gtk.Widget attach, Gtk.Menu menu)
+		public static void DetachMenu(Gtk.Widget attach, Gtk.Menu menu)
 		{
 			// Do nothing.  Callers can use this to work around a
 			// Gtk#2 binding bug requiring a non-null detach
 			// delegate when calling Gtk.Menu.AttachToWidget.
 		}
 
-		static void DeactivateMenu (object sender, EventArgs args)
+		static void DeactivateMenu(object sender, EventArgs args)
 		{
-			Gtk.Menu menu = (Gtk.Menu) sender;
-			menu.Popdown ();
+			Gtk.Menu menu = (Gtk.Menu)sender;
+			menu.Popdown();
 
 			// Unhighlight the parent
 			if (menu.AttachWidget != null)
@@ -61,27 +63,30 @@ namespace Tomboy
 		// Place the menu underneath an arbitrary parent widget.  The
 		// parent widget must be set using menu.AttachToWidget before
 		// calling this.
-		public static void PopupMenu (Gtk.Menu menu, Gdk.EventButton ev)
+		public static void PopupMenu(Gtk.Menu menu, Gdk.EventButton ev)
 		{
-			PopupMenu (menu, ev, new Gtk.MenuPositionFunc (GetMenuPosition));
+			PopupMenu(menu, ev, new Gtk.MenuPositionFunc(GetMenuPosition));
 		}
 
-		public static void PopupMenu (Gtk.Menu menu, Gdk.EventButton ev, Gtk.MenuPositionFunc mpf)
+		public static void PopupMenu(Gtk.Menu menu, Gdk.EventButton ev, Gtk.MenuPositionFunc mpf)
 		{
 			menu.Deactivated += DeactivateMenu;
-			try {
-				menu.Popup (null,
-				            null,
-				            mpf,
-				            (ev == null) ? 0 : ev.Button,
-				            (ev == null) ? Gtk.Global.CurrentEventTime : ev.Time);
-			} catch {
-				Logger.Debug ("Menu popup failed with custom MenuPositionFunc; trying again without");
-				menu.Popup (null,
-				            null,
-				            null,
-				            (ev == null) ? 0 : ev.Button,
-				            (ev == null) ? Gtk.Global.CurrentEventTime : ev.Time);
+			try
+			{
+				menu.Popup(null,
+							null,
+							mpf,
+							(ev == null) ? 0 : ev.Button,
+							(ev == null) ? Gtk.Global.CurrentEventTime : ev.Time);
+			}
+			catch
+			{
+				Logger.Debug("Menu popup failed with custom MenuPositionFunc; trying again without");
+				menu.Popup(null,
+							null,
+							null,
+							(ev == null) ? 0 : ev.Button,
+							(ev == null) ? Gtk.Global.CurrentEventTime : ev.Time);
 			}
 
 			// Highlight the parent
@@ -93,128 +98,151 @@ namespace Tomboy
 #endif
 		}
 
-		public static void BringToForeground () {
-			try {
-				Process current_proc = Process.GetCurrentProcess ();
+		public static void BringToForeground()
+		{
+			try
+			{
+				Process current_proc = Process.GetCurrentProcess();
 				int current_proc_id = current_proc.Id;
 				bool set_foreground_window = true;
-				IntPtr window_handle = GetForegroundWindow ();
+				IntPtr window_handle = GetForegroundWindow();
 
-				if (window_handle != IntPtr.Zero) {
+				if (window_handle != IntPtr.Zero)
+				{
 					set_foreground_window = false;
 
 					int window_handle_proc_id;
-					GetWindowThreadProcessId (window_handle, out window_handle_proc_id);
+					GetWindowThreadProcessId(window_handle, out window_handle_proc_id);
 
-					if (window_handle_proc_id != current_proc_id) {
+					if (window_handle_proc_id != current_proc_id)
+					{
 						set_foreground_window = true;
 					}
 				}
 
-				if (set_foreground_window) {
+				if (set_foreground_window)
+				{
 					window_handle = current_proc.MainWindowHandle;
 
-					if (window_handle != IntPtr.Zero) {
-						SetForegroundWindow (window_handle);
+					if (window_handle != IntPtr.Zero)
+					{
+						SetForegroundWindow(window_handle);
 					}
 				}
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				Logger.Error("Error pulling Tomboy to foreground: {0}", e);
 			}
 		}
 
-		[DllImport ("user32.dll", SetLastError = true)]
-		static extern uint GetWindowThreadProcessId (IntPtr hWnd, out int lpdwProcessId);
+		[DllImport("user32.dll", SetLastError = true)]
+		static extern uint GetWindowThreadProcessId(IntPtr hWnd, out int lpdwProcessId);
 
-		[DllImport ("user32.dll")]
-		static extern IntPtr GetForegroundWindow ();
+		[DllImport("user32.dll")]
+		static extern IntPtr GetForegroundWindow();
 
-		[DllImport ("user32.dll")]
-		[return: MarshalAs (UnmanagedType.Bool)]
-		static extern bool SetForegroundWindow (IntPtr hWnd);
+		[DllImport("user32.dll")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		static extern bool SetForegroundWindow(IntPtr hWnd);
 
-		public static Gdk.Pixbuf GetIcon (string resource_name, int size)
+		public static Gdk.Pixbuf GetIcon(string resource_name, int size)
 		{
-			return GetIcon (null, resource_name, size);
+			return GetIcon(null, resource_name, size);
 		}
-		
-		public static Gdk.Pixbuf GetIcon (System.Reflection.Assembly asm,
+
+		public static Gdk.Pixbuf GetIcon(System.Reflection.Assembly asm,
 										  string resource_name, int size)
 		{
-			try {
-				return Gtk.IconTheme.Default.LoadIcon (resource_name, size, 0);
-			} catch (GLib.GException) {}
+			try
+			{
+				return Gtk.IconTheme.Default.LoadIcon(resource_name, size, 0);
+			}
+			catch (GLib.GException) { }
+			catch (Exception e)
+			{
+				Logger.Debug("Failed on LoadIcon: {0}", e.Message);
+			}
 
-			try {
-				Gdk.Pixbuf ret = new Gdk.Pixbuf (asm, resource_name + ".png");
-				return ret.ScaleSimple (size, size, Gdk.InterpType.Bilinear);
-			} catch (ArgumentException) {}
+			try
+			{
+				Gdk.Pixbuf ret = new Gdk.Pixbuf(asm, resource_name + ".png");
+				return ret.ScaleSimple(size, size, Gdk.InterpType.Bilinear);
+			}
+			catch (ArgumentException) { }
+			catch (Exception e)
+			{
+				Logger.Debug("Failed on Gdk.PixBuf: {0}", e.Message);
+			}
 
-			Logger.Debug ("Unable to load icon '{0}'.", resource_name);
+			Logger.Debug("Unable to load icon '{0}'.", resource_name);
 			return null;
 		}
 
-		public static Gtk.Button MakeImageButton (Gtk.Image image, string label)
+		public static Gtk.Button MakeImageButton(Gtk.Image image, string label)
 		{
-			Gtk.HBox box = new Gtk.HBox (false, 2);
-			box.PackStart (image, false, false, 0);
-			box.PackEnd (new Gtk.Label (label), false, false, 0);
-			box.ShowAll ();
+			Gtk.HBox box = new Gtk.HBox(false, 2);
+			box.PackStart(image, false, false, 0);
+			box.PackEnd(new Gtk.Label(label), false, false, 0);
+			box.ShowAll();
 
-			Gtk.Button button = new Gtk.Button ();
+			Gtk.Button button = new Gtk.Button();
 
-			Gtk.Alignment align = new Gtk.Alignment (0.5f, 0.5f, 0.0f, 0.0f);
-			align.Add (box);
-			align.Show ();
+			Gtk.Alignment align = new Gtk.Alignment(0.5f, 0.5f, 0.0f, 0.0f);
+			align.Add(box);
+			align.Show();
 
-			button.Add (align);
+			button.Add(align);
 			return button;
 		}
 
-		public static Gtk.Button MakeImageButton (string stock_id, string label)
+		public static Gtk.Button MakeImageButton(string stock_id, string label)
 		{
-			Gtk.Image image = new Gtk.Image (stock_id, Gtk.IconSize.Button);
-			return MakeImageButton (image, label);
+			Gtk.Image image = new Gtk.Image(stock_id, Gtk.IconSize.Button);
+			return MakeImageButton(image, label);
 		}
 
-		public static void ShowHelp (string project,
-		                             string page,
-		                             Gdk.Screen screen,
-		                             Gtk.Window parent)
+		public static void ShowHelp(string project,
+									 string page,
+									 Gdk.Screen screen,
+									 Gtk.Window parent)
 		{
-			try {
-				Services.NativeApplication.DisplayHelp (project, page, screen);
-			} catch {
+			try
+			{
+				Services.NativeApplication.DisplayHelp(project, page, screen);
+			}
+			catch
+			{
 				string message =
-					Catalog.GetString ("The \"Tomboy Notes Manual\" could " +
+					Catalog.GetString("The \"Tomboy Notes Manual\" could " +
 					"not be found.  Please verify " +
 					"that your installation has been " +
 					"completed successfully.");
 				HIGMessageDialog dialog =
-				        new HIGMessageDialog (parent,
-				                              Gtk.DialogFlags.DestroyWithParent,
-				                              Gtk.MessageType.Error,
-				                              Gtk.ButtonsType.Ok,
-				                              Catalog.GetString ("Help not found"),
-				                              message);
-				dialog.Run ();
-				dialog.Destroy ();
+						new HIGMessageDialog(parent,
+											  Gtk.DialogFlags.DestroyWithParent,
+											  Gtk.MessageType.Error,
+											  Gtk.ButtonsType.Ok,
+											  Catalog.GetString("Help not found"),
+											  message);
+				dialog.Run();
+				dialog.Destroy();
 			}
 		}
-		
-		public static void ShowOpeningLocationError (Gtk.Window parent, string url, string error)
+
+		public static void ShowOpeningLocationError(Gtk.Window parent, string url, string error)
 		{
-			string message = String.Format ("{0}: {1}", url, error);
+			string message = String.Format("{0}: {1}", url, error);
 
 			HIGMessageDialog dialog =
-			        new HIGMessageDialog (parent,
-			                              Gtk.DialogFlags.DestroyWithParent,
-			                              Gtk.MessageType.Info,
-			                              Gtk.ButtonsType.Ok,
-			                              Catalog.GetString ("Cannot open location"),
-			                              message);
-			dialog.Run ();
-			dialog.Destroy ();
+					new HIGMessageDialog(parent,
+										  Gtk.DialogFlags.DestroyWithParent,
+										  Gtk.MessageType.Info,
+										  Gtk.ButtonsType.Ok,
+										  Catalog.GetString("Cannot open location"),
+										  message);
+			dialog.Run();
+			dialog.Destroy();
 		}
 
 		/// <summary>
@@ -224,62 +252,64 @@ namespace Tomboy
 		/// <param name="show_time">If true, output the time along with the
 		/// date</param>
 		/// </summary>
-		public static string GetPrettyPrintDate (DateTime date, bool show_time)
+		public static string GetPrettyPrintDate(DateTime date, bool show_time)
 		{
 			string pretty_str = String.Empty;
 			DateTime now = DateTime.Now;
-			string short_time = date.ToShortTimeString ();
+			string short_time = date.ToShortTimeString();
 
-			if (date.Year == now.Year) {
+			if (date.Year == now.Year)
+			{
 				if (date.DayOfYear == now.DayOfYear)
 					pretty_str = show_time ?
-					             String.Format (Catalog.GetString ("Today, {0}"),
-					                            short_time) :
-					             Catalog.GetString ("Today");
+								 String.Format(Catalog.GetString("Today, {0}"),
+												short_time) :
+								 Catalog.GetString("Today");
 				else if (date.DayOfYear < now.DayOfYear
-				                && date.DayOfYear == now.DayOfYear - 1)
+								&& date.DayOfYear == now.DayOfYear - 1)
 					pretty_str = show_time ?
-					             String.Format (Catalog.GetString ("Yesterday, {0}"),
-					                            short_time) :
-					             Catalog.GetString ("Yesterday");
+								 String.Format(Catalog.GetString("Yesterday, {0}"),
+												short_time) :
+								 Catalog.GetString("Yesterday");
 				else if (date.DayOfYear < now.DayOfYear
-				                && date.DayOfYear > now.DayOfYear - 6)
+								&& date.DayOfYear > now.DayOfYear - 6)
 					pretty_str = show_time ?
-					             String.Format (Catalog.GetPluralString (
-								"{0} day ago, {1}", "{0} days ago, {1}", 
+								 String.Format(Catalog.GetPluralString(
+								"{0} day ago, {1}", "{0} days ago, {1}",
 								now.DayOfYear - date.DayOfYear),
 								now.DayOfYear - date.DayOfYear, short_time) :
-					             String.Format (Catalog.GetPluralString (
+								 String.Format(Catalog.GetPluralString(
 								"{0} day ago", "{0} days ago",
 								now.DayOfYear - date.DayOfYear),
 								now.DayOfYear - date.DayOfYear);
 				else if (date.DayOfYear > now.DayOfYear
-				                && date.DayOfYear == now.DayOfYear + 1)
+								&& date.DayOfYear == now.DayOfYear + 1)
 					pretty_str = show_time ?
-					             String.Format (Catalog.GetString ("Tomorrow, {0}"),
-					                            short_time) :
-					             Catalog.GetString ("Tomorrow");
+								 String.Format(Catalog.GetString("Tomorrow, {0}"),
+												short_time) :
+								 Catalog.GetString("Tomorrow");
 				else if (date.DayOfYear > now.DayOfYear
-				                && date.DayOfYear < now.DayOfYear + 6)
+								&& date.DayOfYear < now.DayOfYear + 6)
 					pretty_str = show_time ?
-					             String.Format (Catalog.GetPluralString (
+								 String.Format(Catalog.GetPluralString(
 								"In {0} day, {1}", "In {0} days, {1}",
 								date.DayOfYear - now.DayOfYear),
 								date.DayOfYear - now.DayOfYear, short_time) :
-					             String.Format (Catalog.GetPluralString (
+								 String.Format(Catalog.GetPluralString(
 								"In {0} day", "In {0} days",
 								date.DayOfYear - now.DayOfYear),
 								date.DayOfYear - now.DayOfYear);
 				else
 					pretty_str = show_time ?
-					             date.ToString (Catalog.GetString ("MMMM d, h:mm tt")) :
-					             date.ToString (Catalog.GetString ("MMMM d"));
-			} else if (date == DateTime.MinValue)
-				pretty_str = Catalog.GetString ("No Date");
+								 date.ToString(Catalog.GetString("MMMM d, h:mm tt")) :
+								 date.ToString(Catalog.GetString("MMMM d"));
+			}
+			else if (date == DateTime.MinValue)
+				pretty_str = Catalog.GetString("No Date");
 			else
 				pretty_str = show_time ?
-				             date.ToString (Catalog.GetString ("MMMM d yyyy, h:mm tt")) :
-				             date.ToString (Catalog.GetString ("MMMM d yyyy"));
+							 date.ToString(Catalog.GetString("MMMM d yyyy, h:mm tt")) :
+							 date.ToString(Catalog.GetString("MMMM d yyyy"));
 
 			return pretty_str;
 		}
@@ -292,19 +322,23 @@ namespace Tomboy
 		/// <param name="a">
 		/// The action to invoke.
 		/// </param>
-		public static void GtkInvokeAndWait (Action a)
+		public static void GtkInvokeAndWait(Action a)
 		{
 			Exception mainThreadException = null;
-			AutoResetEvent evt = new AutoResetEvent (false);
-			Gtk.Application.Invoke (delegate {
-				try {
-					a.Invoke ();
-				} catch (Exception e) {
+			AutoResetEvent evt = new AutoResetEvent(false);
+			Gtk.Application.Invoke(delegate
+			{
+				try
+				{
+					a.Invoke();
+				}
+				catch (Exception e)
+				{
 					mainThreadException = e;
 				}
-				evt.Set ();
+				evt.Set();
 			});
-			evt.WaitOne ();
+			evt.WaitOne();
 			if (mainThreadException != null)
 				throw mainThreadException;
 		}
@@ -315,14 +349,17 @@ namespace Tomboy
 		/// default preference value is returned instead.
 		/// </summary>
 		/// <returns>Gdk.Color for search match highlight</returns>
-		public static Gdk.Color GetSearchMatchColor ()
+		public static Gdk.Color GetSearchMatchColor()
 		{
 			Gdk.Color search_match_color;
 
-			if ((bool) Preferences.Get (Preferences.ENABLE_CUSTOM_SEARCH_MATCH_COLOR)) {
-				search_match_color = GetPrefSearchMatchColor ();
-			} else {
-				search_match_color = GetDefaultSearchMatchColor ();
+			if ((bool)Preferences.Get(Preferences.ENABLE_CUSTOM_SEARCH_MATCH_COLOR))
+			{
+				search_match_color = GetPrefSearchMatchColor();
+			}
+			else
+			{
+				search_match_color = GetDefaultSearchMatchColor();
 			}
 
 			return search_match_color;
@@ -332,15 +369,18 @@ namespace Tomboy
 		/// Gets the search match highlight color from the preference.
 		/// </summary>
 		/// <returns>The preference search match highlight color or default if unparsable.</returns>
-		public static Gdk.Color GetPrefSearchMatchColor ()
+		public static Gdk.Color GetPrefSearchMatchColor()
 		{
-			string color_pref = (string) Preferences.Get (Preferences.CUSTOM_SEARCH_MATCH_COLOR);
-			try {
-				Gdk.Color search_match_color = GetGdkColorFromHexRgbHashString (color_pref);
+			string color_pref = (string)Preferences.Get(Preferences.CUSTOM_SEARCH_MATCH_COLOR);
+			try
+			{
+				Gdk.Color search_match_color = GetGdkColorFromHexRgbHashString(color_pref);
 				return search_match_color;
-			} catch (InvalidDataException) {
-				Logger.Error ("Cannot parse search match color from preferences {0}, will use defaults", color_pref);
-				return GetDefaultSearchMatchColor ();
+			}
+			catch (InvalidDataException)
+			{
+				Logger.Error("Cannot parse search match color from preferences {0}, will use defaults", color_pref);
+				return GetDefaultSearchMatchColor();
 			}
 		}
 
@@ -348,13 +388,13 @@ namespace Tomboy
 		/// Gets the default highlight color of the search match.
 		/// </summary>
 		/// <returns>The default search match highlight color.</returns>
-		public static Gdk.Color GetDefaultSearchMatchColor ()
+		public static Gdk.Color GetDefaultSearchMatchColor()
 		{
-			string color_pref = (string) Preferences.GetDefault (Preferences.CUSTOM_SEARCH_MATCH_COLOR);
+			string color_pref = (string)Preferences.GetDefault(Preferences.CUSTOM_SEARCH_MATCH_COLOR);
 
 			// The function may return throw an exception if the color is unparsable,
 			// but our precondition is that our default value is always parsable.
-			return GetGdkColorFromHexRgbHashString (color_pref);
+			return GetGdkColorFromHexRgbHashString(color_pref);
 		}
 
 		/// <summary>
@@ -362,14 +402,17 @@ namespace Tomboy
 		/// </summary>
 		/// <returns>The Gdk.Color or throws an InvalidDataException if unparsable.</returns>
 		/// <param name="hash_string">Hex RGB hash string.</param>
-		public static Gdk.Color GetGdkColorFromHexRgbHashString (string hash_string)
+		public static Gdk.Color GetGdkColorFromHexRgbHashString(string hash_string)
 		{
-			Gdk.Color color = new Gdk.Color ();
+			Gdk.Color color = new Gdk.Color();
 
-			if (Gdk.Color.Parse (hash_string, ref color)) {
+			if (Gdk.Color.Parse(hash_string, ref color))
+			{
 				return color;
-			} else {
-				throw new InvalidDataException ("Search match color from preference is unparsable");
+			}
+			else
+			{
+				throw new InvalidDataException("Search match color from preference is unparsable");
 			}
 		}
 
@@ -379,17 +422,17 @@ namespace Tomboy
 		/// </summary>
 		/// <returns>The hex RGB hash string.</returns>
 		/// <param name="color">Color as Gdk.Color</param>
-		public static string GetHexRgbHashStringFromGdkColor (Gdk.Color color)
+		public static string GetHexRgbHashStringFromGdkColor(Gdk.Color color)
 		{
 			// In gtk-sharp 2.12 the result of ToString() is not parsable with Parse(), need to pre-process.
 			// It looks like this: "rgb:rrrr/gggg/bbbb", we want "#rrrrggggbbbb".
 			char[] delim_chars = { ':', '/' };
 			// First - split the string to pieces
-			string[] color_selected_str_parts = color.ToString ().Split (delim_chars);
+			string[] color_selected_str_parts = color.ToString().Split(delim_chars);
 			// Replace "rgb" with "#"
 			color_selected_str_parts[0] = "#";
 			// Assemble it all back together
-			string color_selected_str = string.Join (null, color_selected_str_parts);
+			string color_selected_str = string.Join(null, color_selected_str_parts);
 
 			return color_selected_str;
 		}
@@ -400,29 +443,29 @@ namespace Tomboy
 		Gtk.AccelGroup accel_group;
 		Gtk.Menu fake_menu;
 
-		public GlobalKeybinder (Gtk.AccelGroup accel_group)
+		public GlobalKeybinder(Gtk.AccelGroup accel_group)
 		{
 			this.accel_group = accel_group;
 
-			fake_menu = new Gtk.Menu ();
+			fake_menu = new Gtk.Menu();
 			fake_menu.AccelGroup = accel_group;
 		}
 
-		public void AddAccelerator (EventHandler handler,
-		                            uint key,
-		                            Gdk.ModifierType modifiers,
-		                            Gtk.AccelFlags flags)
+		public void AddAccelerator(EventHandler handler,
+									uint key,
+									Gdk.ModifierType modifiers,
+									Gtk.AccelFlags flags)
 		{
-			Gtk.MenuItem foo = new Gtk.MenuItem ();
+			Gtk.MenuItem foo = new Gtk.MenuItem();
 			foo.Activated += handler;
-			foo.AddAccelerator ("activate",
-			                    accel_group,
-			                    key,
-			                    modifiers,
-			                    flags);
-			foo.Show ();
+			foo.AddAccelerator("activate",
+								accel_group,
+								key,
+								modifiers,
+								flags);
+			foo.Show();
 
-			fake_menu.Append (foo);
+			fake_menu.Append(foo);
 		}
 	}
 
@@ -433,13 +476,13 @@ namespace Tomboy
 		Gtk.Widget extra_widget;
 		Gtk.Image image;
 
-		public HIGMessageDialog (Gtk.Window parent,
-		                         Gtk.DialogFlags flags,
-		                         Gtk.MessageType type,
-		                         Gtk.ButtonsType buttons,
-		                         string          header,
-		                         string          msg)
-: base ()
+		public HIGMessageDialog(Gtk.Window parent,
+								 Gtk.DialogFlags flags,
+								 Gtk.MessageType type,
+								 Gtk.ButtonsType buttons,
+								 string header,
+								 string msg)
+: base()
 		{
 			HasSeparator = false;
 			BorderWidth = 5;
@@ -449,118 +492,121 @@ namespace Tomboy
 			VBox.Spacing = 12;
 			ActionArea.Layout = Gtk.ButtonBoxStyle.End;
 
-			accel_group = new Gtk.AccelGroup ();
-			AddAccelGroup (accel_group);
+			accel_group = new Gtk.AccelGroup();
+			AddAccelGroup(accel_group);
 
-			Gtk.HBox hbox = new Gtk.HBox (false, 12);
+			Gtk.HBox hbox = new Gtk.HBox(false, 12);
 			hbox.BorderWidth = 5;
-			hbox.Show ();
-			VBox.PackStart (hbox, false, false, 0);
+			hbox.Show();
+			VBox.PackStart(hbox, false, false, 0);
 
-			switch (type) {
-			case Gtk.MessageType.Error:
-				image = new Gtk.Image (Gtk.Stock.DialogError,
-				                       Gtk.IconSize.Dialog);
-				break;
-			case Gtk.MessageType.Question:
-				image = new Gtk.Image (Gtk.Stock.DialogQuestion,
-				                       Gtk.IconSize.Dialog);
-				break;
-			case Gtk.MessageType.Info:
-				image = new Gtk.Image (Gtk.Stock.DialogInfo,
-				                       Gtk.IconSize.Dialog);
-				break;
-			case Gtk.MessageType.Warning:
-				image = new Gtk.Image (Gtk.Stock.DialogWarning,
-				                       Gtk.IconSize.Dialog);
-				break;
-			default:
-				image = new Gtk.Image ();
-				break;
+			switch (type)
+			{
+				case Gtk.MessageType.Error:
+					image = new Gtk.Image(Gtk.Stock.DialogError,
+										   Gtk.IconSize.Dialog);
+					break;
+				case Gtk.MessageType.Question:
+					image = new Gtk.Image(Gtk.Stock.DialogQuestion,
+										   Gtk.IconSize.Dialog);
+					break;
+				case Gtk.MessageType.Info:
+					image = new Gtk.Image(Gtk.Stock.DialogInfo,
+										   Gtk.IconSize.Dialog);
+					break;
+				case Gtk.MessageType.Warning:
+					image = new Gtk.Image(Gtk.Stock.DialogWarning,
+										   Gtk.IconSize.Dialog);
+					break;
+				default:
+					image = new Gtk.Image();
+					break;
 			}
 
-			if (image != null) {
-				image.Show ();
+			if (image != null)
+			{
+				image.Show();
 				image.Yalign = 0;
-				hbox.PackStart (image, false, false, 0);
+				hbox.PackStart(image, false, false, 0);
 			}
 
-			Gtk.VBox label_vbox = new Gtk.VBox (false, 0);
-			label_vbox.Show ();
-			hbox.PackStart (label_vbox, true, true, 0);
+			Gtk.VBox label_vbox = new Gtk.VBox(false, 0);
+			label_vbox.Show();
+			hbox.PackStart(label_vbox, true, true, 0);
 
-			string title = String.Format ("<span weight='bold' size='larger'>{0}" +
-			                              "</span>\n",
-			                              header);
+			string title = String.Format("<span weight='bold' size='larger'>{0}" +
+										  "</span>\n",
+										  header);
 
 			Gtk.Label label;
 
-			label = new Gtk.Label (title);
+			label = new Gtk.Label(title);
 			label.UseMarkup = true;
 			label.UseUnderline = false;
 			label.Justify = Gtk.Justification.Left;
 			label.LineWrap = true;
-			label.SetAlignment (0.0f, 0.5f);
-			label.Show ();
-			label_vbox.PackStart (label, false, false, 0);
+			label.SetAlignment(0.0f, 0.5f);
+			label.Show();
+			label_vbox.PackStart(label, false, false, 0);
 
-			label = new Gtk.Label (msg);
+			label = new Gtk.Label(msg);
 			label.UseMarkup = true;
 			label.UseUnderline = false;
 			label.Justify = Gtk.Justification.Left;
 			label.LineWrap = true;
-			label.SetAlignment (0.0f, 0.5f);
-			label.Show ();
-			label_vbox.PackStart (label, false, false, 0);
-			
-			extra_widget_vbox = new Gtk.VBox (false, 0);
+			label.SetAlignment(0.0f, 0.5f);
+			label.Show();
+			label_vbox.PackStart(label, false, false, 0);
+
+			extra_widget_vbox = new Gtk.VBox(false, 0);
 			extra_widget_vbox.Show();
-			label_vbox.PackStart (extra_widget_vbox, true, true, 12);
+			label_vbox.PackStart(extra_widget_vbox, true, true, 12);
 
-			switch (buttons) {
-			case Gtk.ButtonsType.None:
-				break;
-			case Gtk.ButtonsType.Ok:
-				AddButton (Gtk.Stock.Ok, Gtk.ResponseType.Ok, true);
-				break;
-			case Gtk.ButtonsType.Close:
-				AddButton (Gtk.Stock.Close, Gtk.ResponseType.Close, true);
-				break;
-			case Gtk.ButtonsType.Cancel:
-				AddButton (Gtk.Stock.Cancel, Gtk.ResponseType.Cancel, true);
-				break;
-			case Gtk.ButtonsType.YesNo:
-				AddButton (Gtk.Stock.No, Gtk.ResponseType.No, false);
-				AddButton (Gtk.Stock.Yes, Gtk.ResponseType.Yes, true);
-				break;
-			case Gtk.ButtonsType.OkCancel:
-				AddButton (Gtk.Stock.Cancel, Gtk.ResponseType.Cancel, false);
-				AddButton (Gtk.Stock.Ok, Gtk.ResponseType.Ok, true);
-				break;
+			switch (buttons)
+			{
+				case Gtk.ButtonsType.None:
+					break;
+				case Gtk.ButtonsType.Ok:
+					AddButton(Gtk.Stock.Ok, Gtk.ResponseType.Ok, true);
+					break;
+				case Gtk.ButtonsType.Close:
+					AddButton(Gtk.Stock.Close, Gtk.ResponseType.Close, true);
+					break;
+				case Gtk.ButtonsType.Cancel:
+					AddButton(Gtk.Stock.Cancel, Gtk.ResponseType.Cancel, true);
+					break;
+				case Gtk.ButtonsType.YesNo:
+					AddButton(Gtk.Stock.No, Gtk.ResponseType.No, false);
+					AddButton(Gtk.Stock.Yes, Gtk.ResponseType.Yes, true);
+					break;
+				case Gtk.ButtonsType.OkCancel:
+					AddButton(Gtk.Stock.Cancel, Gtk.ResponseType.Cancel, false);
+					AddButton(Gtk.Stock.Ok, Gtk.ResponseType.Ok, true);
+					break;
 			}
 
 			if (parent != null)
 				TransientFor = parent;
 
-			if ((int) (flags & Gtk.DialogFlags.Modal) != 0)
+			if ((int)(flags & Gtk.DialogFlags.Modal) != 0)
 				Modal = true;
 
-			if ((int) (flags & Gtk.DialogFlags.DestroyWithParent) != 0)
+			if ((int)(flags & Gtk.DialogFlags.DestroyWithParent) != 0)
 				DestroyWithParent = true;
 		}
 
-		protected void AddButton (string stock_id, Gtk.ResponseType response, bool is_default)
+		protected void AddButton(string stock_id, Gtk.ResponseType response, bool is_default)
 		{
-			Gtk.Button button = new Gtk.Button (stock_id);
+			Gtk.Button button = new Gtk.Button(stock_id);
 			button.CanDefault = true;
-			
-			AddButton (button, response, is_default);
+
+			AddButton(button, response, is_default);
 		}
-		
-		protected void AddButton (Gdk.Pixbuf pixbuf, string label_text, Gtk.ResponseType response, bool is_default)
+
+		protected void AddButton(Gdk.Pixbuf pixbuf, string label_text, Gtk.ResponseType response, bool is_default)
 		{
-			Gtk.Button button = new Gtk.Button ();
-			Gtk.Image image = new Gtk.Image (pixbuf);
+			Gtk.Button button = new Gtk.Button();
+			Gtk.Image image = new Gtk.Image(pixbuf);
 			// NOTE: This property is new to GTK+ 2.10, but we don't
 			//       really need the line because we're just setting
 			//       it to the default value anyway.
@@ -569,43 +615,48 @@ namespace Tomboy
 			button.Label = label_text;
 			button.UseUnderline = true;
 			button.CanDefault = true;
-			
-			AddButton (button, response, is_default);
+
+			AddButton(button, response, is_default);
 		}
-		
-		private void AddButton (Gtk.Button button, Gtk.ResponseType response, bool is_default)
+
+		private void AddButton(Gtk.Button button, Gtk.ResponseType response, bool is_default)
 		{
-			button.Show ();
+			button.Show();
 
-			AddActionWidget (button, response);
+			AddActionWidget(button, response);
 
-			if (is_default) {
+			if (is_default)
+			{
 				DefaultResponse = response;
 			}
 		}
-		
+
 		public Gtk.Widget ExtraWidget
 		{
-			get {
+			get
+			{
 				return extra_widget;
 			}
-			set {
-				if (extra_widget != null) {
-					extra_widget_vbox.Remove (extra_widget);
+			set
+			{
+				if (extra_widget != null)
+				{
+					extra_widget_vbox.Remove(extra_widget);
 				}
-				
+
 				extra_widget = value;
-				extra_widget.ShowAll ();
-				extra_widget_vbox.PackStart (extra_widget, true, true, 0);
+				extra_widget.ShowAll();
+				extra_widget_vbox.PackStart(extra_widget, true, true, 0);
 			}
 		}
-		
+
 		/// <value>
 		/// This allows you to set the Gdk.Pixbuf for the dialog's Gtk.Image.
 		/// </value>
 		public Gdk.Pixbuf Pixbuf
 		{
-			set {
+			set
+			{
 				image.Pixbuf = value;
 			}
 		}
@@ -613,80 +664,91 @@ namespace Tomboy
 
 	public class UriList : List<Uri>
 	{
-		public UriList (Note [] notes)
+		public UriList(Note[] notes)
 		{
-			foreach (Note note in notes) {
-				try {
-					Uri uri = new Uri (note.Uri);
-					Add (uri);
-				} catch {
+			foreach (Note note in notes)
+			{
+				try
+				{
+					Uri uri = new Uri(note.Uri);
+					Add(uri);
+				}
+				catch
+				{
+				}
 			}
 		}
-	}
 
-	private void LoadFromString (string data)
+		private void LoadFromString(string data)
 		{
-			string [] items = data.Split ('\n');
+			string[] items = data.Split('\n');
 
-			foreach (string i in items) {
-				if (i.StartsWith ("#"))
+			foreach (string i in items)
+			{
+				if (i.StartsWith("#"))
 					continue;
 
 				string s = i;
-				if (s.EndsWith ("\r"))
-					s = s.Substring (0, s.Length - 1);
+				if (s.EndsWith("\r"))
+					s = s.Substring(0, s.Length - 1);
 
 				// Handle evo's broken file urls
-				if (s.StartsWith ("file:////"))
-					s = s.Replace ("file:////", "file:///");
+				if (s.StartsWith("file:////"))
+					s = s.Replace("file:////", "file:///");
 
-				Logger.Debug ("uri = {0}", s);
-				try {
-					Uri uri = new Uri (s);
+				Logger.Debug("uri = {0}", s);
+				try
+				{
+					Uri uri = new Uri(s);
 					if (uri != null)
-						Add (uri);
-				} catch {
+						Add(uri);
+				}
+				catch
+				{
+				}
 			}
 		}
-	}
 
-	public UriList (string data)
+		public UriList(string data)
 		{
-			LoadFromString (data);
+			LoadFromString(data);
 		}
 
-		public UriList (Gtk.SelectionData selection)
+		public UriList(Gtk.SelectionData selection)
 		{
 			// FIXME this should check the atom etc.
 			if (selection.Length > 0)
-				LoadFromString (Encoding.UTF8.GetString (selection.Data));
+				LoadFromString(Encoding.UTF8.GetString(selection.Data));
 		}
 
-		public override string ToString ()
+		public override string ToString()
 		{
-			StringBuilder list = new StringBuilder ();
+			StringBuilder list = new StringBuilder();
 
-			foreach (Uri uri in this) {
-				list.Append (uri.ToString () + "\r\n");
+			foreach (Uri uri in this)
+			{
+				list.Append(uri.ToString() + "\r\n");
 			}
 
-			return list.ToString ();
+			return list.ToString();
 		}
 
-		public string [] GetLocalPaths ()
+		public string[] GetLocalPaths()
 		{
 			int count = 0;
-			foreach (Uri uri in this) {
+			foreach (Uri uri in this)
+			{
 				if (uri.IsFile)
 					count++;
 			}
 
-			string [] paths = new string [count];
+			string[] paths = new string[count];
 
 			count = 0;
-			foreach (Uri uri in this) {
+			foreach (Uri uri in this)
+			{
 				if (uri.IsFile)
-					paths [count++] = uri.LocalPath;
+					paths[count++] = uri.LocalPath;
 			}
 
 			return paths;
@@ -702,27 +764,27 @@ namespace Tomboy
 		static XmlWriterSettings documentSettings;
 		static XmlWriterSettings fragmentSettings;
 
-		static XmlEncoder ()
+		static XmlEncoder()
 		{
-			documentSettings = new XmlWriterSettings ();
+			documentSettings = new XmlWriterSettings();
 			documentSettings.NewLineChars = "\n";
 			documentSettings.Indent = true;
 
-			fragmentSettings = new XmlWriterSettings ();
+			fragmentSettings = new XmlWriterSettings();
 			fragmentSettings.NewLineChars = "\n";
 			fragmentSettings.Indent = true;
 			fragmentSettings.ConformanceLevel = ConformanceLevel.Fragment;
 
-			builder = new StringBuilder ();
-			writer = new StringWriter (builder);
-			xml = new XmlTextWriter (writer);
+			builder = new StringBuilder();
+			writer = new StringWriter(builder);
+			xml = new XmlTextWriter(writer);
 		}
 
-		public static string Encode (string source)
+		public static string Encode(string source)
 		{
-			xml.WriteString (source);
+			xml.WriteString(source);
 
-			string val = builder.ToString ();
+			string val = builder.ToString();
 			builder.Length = 0;
 			return val;
 		}
@@ -743,29 +805,31 @@ namespace Tomboy
 	{
 		static StringBuilder builder;
 
-		static XmlDecoder ()
+		static XmlDecoder()
 		{
-			builder = new StringBuilder ();
+			builder = new StringBuilder();
 		}
 
-		public static string Decode (string source)
+		public static string Decode(string source)
 		{
-			StringReader reader = new StringReader (source);
-			XmlTextReader xml = new XmlTextReader (reader);
+			StringReader reader = new StringReader(source);
+			XmlTextReader xml = new XmlTextReader(reader);
 			xml.Namespaces = false;
 
-			while (xml.Read ()) {
-				switch (xml.NodeType) {
-				case XmlNodeType.Text:
-				case XmlNodeType.Whitespace:
-					builder.Append (xml.Value);
-					break;
+			while (xml.Read())
+			{
+				switch (xml.NodeType)
+				{
+					case XmlNodeType.Text:
+					case XmlNodeType.Whitespace:
+						builder.Append(xml.Value);
+						break;
 				}
 			}
 
-			xml.Close ();
+			xml.Close();
 
-			string val = builder.ToString ();
+			string val = builder.ToString();
 			builder.Length = 0;
 			return val;
 		}
@@ -777,74 +841,81 @@ namespace Tomboy
 		Gtk.TextMark start_mark;
 		Gtk.TextMark end_mark;
 
-		public TextRange (Gtk.TextIter start,
-		                  Gtk.TextIter end)
+		public TextRange(Gtk.TextIter start,
+						  Gtk.TextIter end)
 		{
 			if (start.Buffer != end.Buffer)
-				throw new Exception ("Start buffer and end buffer do not match");
+				throw new Exception("Start buffer and end buffer do not match");
 
 			buffer = start.Buffer;
-			start_mark = buffer.CreateMark (null, start, true);
-			end_mark = buffer.CreateMark (null, end, true);
+			start_mark = buffer.CreateMark(null, start, true);
+			end_mark = buffer.CreateMark(null, end, true);
 		}
 
 		public Gtk.TextBuffer Buffer
 		{
-			get {
+			get
+			{
 				return buffer;
 			}
 		}
 
 		public string Text
 		{
-			get {
-				return Start.GetText (End);
+			get
+			{
+				return Start.GetText(End);
 			}
 		}
 
 		public int Length
 		{
-			get {
+			get
+			{
 				return Text.Length;
 			}
 		}
 
 		public Gtk.TextIter Start
 		{
-			get {
-				return buffer.GetIterAtMark (start_mark);
+			get
+			{
+				return buffer.GetIterAtMark(start_mark);
 			}
-			set {
-				buffer.MoveMark (start_mark, value);
+			set
+			{
+				buffer.MoveMark(start_mark, value);
 			}
 		}
 
 		public Gtk.TextIter End
 		{
-			get {
-				return buffer.GetIterAtMark (end_mark);
+			get
+			{
+				return buffer.GetIterAtMark(end_mark);
 			}
-			set {
-				buffer.MoveMark (end_mark, value);
+			set
+			{
+				buffer.MoveMark(end_mark, value);
 			}
 		}
 
-		public void Erase ()
+		public void Erase()
 		{
 			Gtk.TextIter start_iter = Start;
 			Gtk.TextIter end_iter = End;
-			buffer.Delete (ref start_iter, ref end_iter);
+			buffer.Delete(ref start_iter, ref end_iter);
 		}
 
-		public void Destroy ()
+		public void Destroy()
 		{
-			buffer.DeleteMark (start_mark);
-			buffer.DeleteMark (end_mark);
+			buffer.DeleteMark(start_mark);
+			buffer.DeleteMark(end_mark);
 		}
 
-		public void RemoveTag (Gtk.TextTag tag)
+		public void RemoveTag(Gtk.TextTag tag)
 		{
-			buffer.RemoveTag (tag, Start, End);
+			buffer.RemoveTag(tag, Start, End);
 		}
 	}
 
@@ -855,76 +926,82 @@ namespace Tomboy
 		Gtk.TextMark mark;
 		TextRange range;
 
-		public TextTagEnumerator (Gtk.TextBuffer buffer, string tag_name)
-: this (buffer, buffer.TagTable.Lookup (tag_name))
+		public TextTagEnumerator(Gtk.TextBuffer buffer, string tag_name)
+: this(buffer, buffer.TagTable.Lookup(tag_name))
 		{
 		}
 
-		public TextTagEnumerator (Gtk.TextBuffer buffer, Gtk.TextTag tag)
+		public TextTagEnumerator(Gtk.TextBuffer buffer, Gtk.TextTag tag)
 		{
 			this.buffer = buffer;
 			this.tag = tag;
 
-			this.mark = buffer.CreateMark (null, buffer.StartIter, true);
-			this.range = new TextRange (buffer.StartIter, buffer.StartIter);
+			this.mark = buffer.CreateMark(null, buffer.StartIter, true);
+			this.range = new TextRange(buffer.StartIter, buffer.StartIter);
 		}
 
 		public object Current
 		{
-			get {
+			get
+			{
 				return range;
 			}
 		}
 
 		// FIXME: Mutability bugs.  multiple Links on the same line
 		// aren't getting renamed.
-		public bool MoveNext ()
+		public bool MoveNext()
 		{
-			Gtk.TextIter iter = buffer.GetIterAtMark (mark);
+			Gtk.TextIter iter = buffer.GetIterAtMark(mark);
 
-			if (iter.Equal (buffer.EndIter)) {
-				range.Destroy ();
-				buffer.DeleteMark (mark);
+			if (iter.Equal(buffer.EndIter))
+			{
+				range.Destroy();
+				buffer.DeleteMark(mark);
 				return false;
 			}
 
-			if (!iter.ForwardToTagToggle (tag)) {
-				range.Destroy ();
-				buffer.DeleteMark (mark);
+			if (!iter.ForwardToTagToggle(tag))
+			{
+				range.Destroy();
+				buffer.DeleteMark(mark);
 				return false;
 			}
 
-			if (!iter.BeginsTag (tag)) {
-				buffer.MoveMark (mark, iter);
-				return MoveNext ();
+			if (!iter.BeginsTag(tag))
+			{
+				buffer.MoveMark(mark, iter);
+				return MoveNext();
 			}
 
 			range.Start = iter;
 
-			if (!iter.ForwardToTagToggle (tag)) {
-				range.Destroy ();
-				buffer.DeleteMark (mark);
+			if (!iter.ForwardToTagToggle(tag))
+			{
+				range.Destroy();
+				buffer.DeleteMark(mark);
 				return false;
 			}
 
-			if (!iter.EndsTag (tag)) {
-				buffer.MoveMark (mark, iter);
-				return MoveNext ();
+			if (!iter.EndsTag(tag))
+			{
+				buffer.MoveMark(mark, iter);
+				return MoveNext();
 			}
 
 			range.End = iter;
 
-			buffer.MoveMark (mark, iter);
+			buffer.MoveMark(mark, iter);
 
 			return true;
 		}
 
-		public void Reset ()
+		public void Reset()
 		{
-			buffer.MoveMark (mark, buffer.StartIter);
+			buffer.MoveMark(mark, buffer.StartIter);
 		}
 
-		public IEnumerator GetEnumerator ()
+		public IEnumerator GetEnumerator()
 		{
 			return this;
 		}
@@ -935,36 +1012,37 @@ namespace Tomboy
 		uint timeout_id;
 		EventArgs args;
 
-		public InterruptableTimeout ()
+		public InterruptableTimeout()
 		{
 		}
 
-		public void Reset (uint timeout_millis)
+		public void Reset(uint timeout_millis)
 		{
-			Reset (timeout_millis, null);
+			Reset(timeout_millis, null);
 		}
 
-		public void Reset (uint timeout_millis, EventArgs args)
+		public void Reset(uint timeout_millis, EventArgs args)
 		{
-			Cancel ();
+			Cancel();
 			this.args = args;
-			timeout_id = GLib.Timeout.Add (timeout_millis,
-			                               new GLib.TimeoutHandler (TimeoutExpired));
+			timeout_id = GLib.Timeout.Add(timeout_millis,
+										   new GLib.TimeoutHandler(TimeoutExpired));
 		}
 
-		public void Cancel ()
+		public void Cancel()
 		{
-			if (timeout_id != 0) {
-				GLib.Source.Remove (timeout_id);
+			if (timeout_id != 0)
+			{
+				GLib.Source.Remove(timeout_id);
 				timeout_id = 0;
 				args = null;
 			}
 		}
 
-		bool TimeoutExpired ()
+		bool TimeoutExpired()
 		{
 			if (Timeout != null)
-				Timeout (this, args);
+				Timeout(this, args);
 
 			timeout_id = 0;
 			return false;
@@ -975,15 +1053,15 @@ namespace Tomboy
 
 	public class ForcedPresentWindow : Gtk.Window
 	{
-		public ForcedPresentWindow (string name)
-: base (name)
+		public ForcedPresentWindow(string name)
+: base(name)
 		{
 		}
 #if !WIN32 && !MAC
-		public new void Present ()
+		public new void Present()
 		{
 			//delay Present() to play well with global key bindings
-			Gtk.Application.Invoke (delegate { base.Present (); } );
+			Gtk.Application.Invoke(delegate { base.Present(); });
 		}
 #endif
 	}
@@ -992,62 +1070,65 @@ namespace Tomboy
 	{
 		Gtk.Menu menu;
 
-		public ToolMenuButton (Gtk.Toolbar toolbar,
-		                       string stock_image,
-		                       string label,
-		                       Gtk.Menu menu)
-			: this (toolbar,
-		        new Gtk.Image (stock_image, toolbar.IconSize),
-		        label,
-		        menu)
+		public ToolMenuButton(Gtk.Toolbar toolbar,
+							   string stock_image,
+							   string label,
+							   Gtk.Menu menu)
+			: this(toolbar,
+				new Gtk.Image(stock_image, toolbar.IconSize),
+				label,
+				menu)
 		{
 		}
 
-		public ToolMenuButton (Gtk.Toolbar toolbar,
-		                       Gtk.Image image,
-		                       string label,
-		                       Gtk.Menu menu) : base ()
+		public ToolMenuButton(Gtk.Toolbar toolbar,
+							   Gtk.Image image,
+							   string label,
+							   Gtk.Menu menu) : base()
 		{
 			this.IconWidget = image;
-			Gtk.Label l = new Gtk.Label (label);
+			Gtk.Label l = new Gtk.Label(label);
 			l.UseUnderline = true;
 			this.LabelWidget = l;
 			this.CanFocus = true;
-//			this.FocusOnClick = false; // TODO: Not supported anymore?
+			//			this.FocusOnClick = false; // TODO: Not supported anymore?
 			this.menu = menu;
-			menu.AttachToWidget (this,GuiUtils.DetachMenu);
+			menu.AttachToWidget(this, GuiUtils.DetachMenu);
 			menu.Deactivated += ReleaseButton;
 
-			this.ShowAll ();
+			this.ShowAll();
 		}
 
-		protected override bool OnButtonPressEvent (Gdk.EventButton ev)
+		protected override bool OnButtonPressEvent(Gdk.EventButton ev)
 		{
-			GuiUtils.PopupMenu (menu, ev);
+			GuiUtils.PopupMenu(menu, ev);
 			return true;
 		}
 
-		protected override void OnClicked ()
+		protected override void OnClicked()
 		{
-			menu.SelectFirst (true);
-			GuiUtils.PopupMenu (menu, null);
+			menu.SelectFirst(true);
+			GuiUtils.PopupMenu(menu, null);
 		}
 
-		protected override bool OnMnemonicActivated (bool group_cycling)
+		protected override bool OnMnemonicActivated(bool group_cycling)
 		{
 			// ToggleButton always grabs focus away from the editor,
 			// so reimplement Widget's version, which only grabs the
 			// focus if we are group cycling.
-			if (!group_cycling) {
-				Activate ();
-			} else if (CanFocus) {
-				GrabFocus ();
+			if (!group_cycling)
+			{
+				Activate();
+			}
+			else if (CanFocus)
+			{
+				GrabFocus();
 			}
 
 			return true;
 		}
 
-		void ReleaseButton (object sender, EventArgs args)
+		void ReleaseButton(object sender, EventArgs args)
 		{
 			// Release the state when the menu closes
 			Active = false;
@@ -1059,46 +1140,49 @@ namespace Tomboy
 		static INativeApplication native_app;
 		static ActionManager action_manager;
 
-		public static void Initialize (string locale_dir,
-		                               string display_name,
-		                               string process_name,
-		                               string [] args)
+		public static async Task Initialize(string locale_dir,
+											string display_name,
+											string process_name,
+											string[] args)
 		{
 			native_app = Services.NativeApplication;
-			native_app.Initialize (locale_dir, display_name, process_name, args);
+			Logger.Debug("In Application::Initialize(): Initializing Tomboy application");
+			await native_app.Initialize(locale_dir, display_name, process_name, args);
 
-			action_manager = new ActionManager ();
-			action_manager.LoadInterface ();
+			Logger.Debug("In Application::Initialize(): Loading action manager");
+			action_manager = new ActionManager();
+			action_manager.LoadInterface();
 
-			native_app.RegisterSignalHandlers ();
+			native_app.RegisterSignalHandlers();
 		}
 
-		public static void RegisterSessionManagerRestart (string executable_path,
-		                string[] args,
-		                string[] environment)
+		public static void RegisterSessionManagerRestart(string executable_path,
+						string[] args,
+						string[] environment)
 		{
-			native_app.RegisterSessionManagerRestart (executable_path, args, environment);
+			native_app.RegisterSessionManagerRestart(executable_path, args, environment);
 		}
 
 		public static event EventHandler ExitingEvent
 		{
-		        add { native_app.ExitingEvent += value; }
-		        remove { native_app.ExitingEvent -= value; }
+			add { native_app.ExitingEvent += value; }
+			remove { native_app.ExitingEvent -= value; }
 		}
 
-		public static void Exit (int exitcode)
+		public static void Exit(int exitcode)
 		{
-			native_app.Exit (exitcode);
+			native_app.Exit(exitcode);
 		}
 
-		public static void StartMainLoop ()
+		public static void StartMainLoop()
 		{
-			native_app.StartMainLoop ();
+			native_app.StartMainLoop();
 		}
 
 		public static ActionManager ActionManager
 		{
-			get {
+			get
+			{
 				return action_manager;
 			}
 		}
@@ -1111,13 +1195,13 @@ namespace Tomboy
 		/// new_path. Assumes that old_path is an existing directory
 		/// and new_path does not exist.
 		/// </summary>
-		public static void CopyDirectory (string old_path, string new_path)
+		public static void CopyDirectory(string old_path, string new_path)
 		{
-			Directory.CreateDirectory (new_path);
-			foreach (string file_path in Directory.GetFiles (old_path))
-				File.Copy (file_path, Path.Combine (new_path, Path.GetFileName (file_path)));
-			foreach (string dir_path in Directory.GetDirectories (old_path))
-				CopyDirectory (dir_path, Path.Combine (new_path, Path.GetFileName (dir_path)));
+			Directory.CreateDirectory(new_path);
+			foreach (string file_path in Directory.GetFiles(old_path))
+				File.Copy(file_path, Path.Combine(new_path, Path.GetFileName(file_path)));
+			foreach (string dir_path in Directory.GetDirectories(old_path))
+				CopyDirectory(dir_path, Path.Combine(new_path, Path.GetFileName(dir_path)));
 		}
 	}
 }

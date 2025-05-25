@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 using System.Threading;
 
-using Mono.Unix;
+using Tomboy.Compat;
 
 namespace Tomboy.Sync
 {

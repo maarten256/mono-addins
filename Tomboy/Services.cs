@@ -42,6 +42,7 @@ namespace Tomboy
 #elif MAC
 			factory = new MacFactory ();
 #else
+			Console.WriteLine ("In Services(): Using GnomeFactory as default platform factory.");
 			factory = new GnomeFactory ();
 #endif
 			

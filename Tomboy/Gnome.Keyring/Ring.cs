@@ -36,7 +36,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 
-using Mono.Unix;
+using Tomboy.Compat;
 
 #if ENABLE_DBUS
 using DBus;
@@ -108,7 +108,7 @@ namespace Gnome.Keyring {
 			if (filename == null || filename == "")
 				return null;
 
-			EndPoint ep = new UnixEndPoint (filename);
+			EndPoint ep = new Mono.Unix.UnixEndPoint (filename);
 			Socket sock = new Socket (AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
 			try {
 				sock.Connect (ep);

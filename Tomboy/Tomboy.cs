@@ -3,9 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml;
-using Mono.Unix;
 
 using Tomboy.Sync;
+using Tomboy.Compat;
+using System.Threading.Tasks;
 
 namespace Tomboy
 {
@@ -24,8 +25,9 @@ namespace Tomboy
 		static Gtk.IconTheme icon_theme = null;
 
 		[STAThread]
-		public static void Main (string [] args)
+		public static async Task Main (string [] args)
 		{
+			Console.WriteLine ("In Main(): Tomboy {0} starting...", Defines.VERSION);
 			// TODO: Extract to a PreInit in Application, or something
 #if WIN32
 			string tomboy_path =
@@ -61,7 +63,7 @@ namespace Tomboy
 			debugging = cmd_line.Debug;
 			uninstalled = cmd_line.Uninstalled;
 
-			if (!RemoteControlProxy.FirstInstance) {
+			if (! await RemoteControlProxy.FirstInstanceAsync() ) {
 				if (!cmd_line.NeedsExecute)
 					cmd_line = new TomboyCommandLine (new string [] {"--search"});
 				// Execute args at an existing tomboy instance...
@@ -77,13 +79,25 @@ namespace Tomboy
 			is_panel_applet = false;
 #endif
 
+			Logger.Debug ("In Main(): About to initialize...");
 			// NOTE: It is important not to use the Preferences
 			//       class before this call.
-			Initialize ("tomboy", "Tomboy", "tomboy", args);
+			await Initialize("tomboy", "Tomboy", "tomboy", args);
 
 			// Add private icon dir to search path
 			icon_theme = Gtk.IconTheme.Default;
-			icon_theme.AppendSearchPath (Path.Combine (Path.Combine (Defines.DATADIR, "tomboy"), "icons"));
+			if (icon_theme == null) {
+				Logger.Error ("Failed to get default icon theme");
+			} else {
+				try
+				{
+					icon_theme.AppendSearchPath(Path.Combine(Path.Combine(Defines.DATADIR, "tomboy"), "icons"));
+				}
+				catch (Exception e)
+				{
+					Logger.Error("Failed to add icon search pa	th: {0}", e.Message);
+				}
+			}
 
 			// Create the default note manager instance.
 			string note_path = GetNotePath (cmd_line.NotePath);
@@ -108,7 +122,7 @@ namespace Tomboy
 				}
 
 				// Register the manager to handle remote requests.
-				RegisterRemoteControl (manager);
+				_ = RegisterRemoteControl (manager);
 				if (cmd_line.NeedsExecute) {
 					// Execute args on this instance
 					cmd_line.Execute ();
@@ -199,10 +213,10 @@ namespace Tomboy
 			StartMainLoop ();
 		}
 
-		static void RegisterRemoteControl (NoteManager manager)
+		static async Task RegisterRemoteControl (NoteManager manager)
 		{
 			try {
-				remote_control = RemoteControlProxy.Register (manager);
+				remote_control = await RemoteControlProxy.RegisterAsync (manager);
 				if (remote_control != null) {
 					Logger.Debug ("Tomboy remote control active.");
 				} else {
@@ -211,12 +225,12 @@ namespace Tomboy
 					// attempt to run Tomboy again.
 					IRemoteControl remote = null;
 					try {
-						remote = RemoteControlProxy.GetInstance ();
+						remote = await RemoteControlProxy.GetInstanceAsync ();
 						remote.DisplaySearch ();
 					} catch {}
 
 					Logger.Error ("Tomboy is already running.  Exiting...");
-					System.Environment.Exit (-1);
+                    Environment.Exit (-1);
 				}
 			} catch (Exception e) {
 				Logger.Warn ("Tomboy remote control disabled (DBus exception): {0}",
@@ -422,7 +436,7 @@ namespace Tomboy
 				translators = null;
 
 			Gtk.AboutDialog about = new Gtk.AboutDialog ();
-			about.Name = "Tomboy";
+			about.ProgramName = "Tomboy";
 			about.Version = Defines.VERSION;
 			about.Logo = GuiUtils.GetIcon ("tomboy", 48);
 			about.Copyright =
@@ -752,11 +766,11 @@ namespace Tomboy
 			}
 		}
 
-		public void Execute ()
+		public async void Execute ()
 		{
 			IRemoteControl remote = null;
 			try {
-				remote = RemoteControlProxy.GetInstance ();
+				remote = await RemoteControlProxy.GetInstanceAsync ();
 			} catch (Exception e) {
 				Logger.Error ("Unable to connect to Tomboy remote control: {0}",
 				            e.Message);

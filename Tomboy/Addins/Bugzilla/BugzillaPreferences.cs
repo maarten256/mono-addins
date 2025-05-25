@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using Mono.Unix;
+using Tomboy.Compat;
 
 namespace Tomboy.Bugzilla
 {

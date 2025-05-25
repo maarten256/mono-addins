@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Mono.Unix;
+using Tomboy.Compat;
 using Gtk;
 using Tomboy.Sync;
 

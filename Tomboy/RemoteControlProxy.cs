@@ -1,118 +1,95 @@
 using System;
-#if ENABLE_DBUS
-using DBus;
-using org.freedesktop.DBus;
-#else
-using System.Threading;
-using System.Runtime.Remoting;
-using System.Runtime.Remoting.Activation;
-using System.Runtime.Remoting.Channels;
-using System.Runtime.Remoting.Channels.Ipc;
-#endif
+using System.Threading.Tasks;
+using Tmds.DBus;
 
 namespace Tomboy
 {
-	public static class RemoteControlProxy {
-#if ENABLE_DBUS
-		private const string Path = "/org/gnome/Tomboy/RemoteControl";
-		private const string Namespace = "org.gnome.Tomboy";
-		private static bool? firstInstance;
-#else
-		private static Mutex mutex;
-		private static bool firstInstance;
-		private const string MutexName = "{9EF7D32D-3392-4940-8A28-1320A7BD42AB}";
+    public static class RemoteControlProxy
+    {
+        private const string Path = "/org/gnome/Tomboy/RemoteControl";
+        private const string Namespace = "org.gnome.Tomboy";
 
-		private static IpcChannel IpcChannel;
-		private const string ServerName = "TomboyServer";
-		private const string ClientName = "TomboyClient";
-		private const string WrapperName = "TomboyRemoteControlWrapper";
-		private static string ServiceUrl =
-			string.Format ("ipc://{0}/{1}", ServerName, WrapperName);
-#endif
+        private static bool? firstInstance;
+        private static Connection _sessionBus;
+        private static IRemoteControl _remoteControlProxy;
 
-		public static IRemoteControl GetInstance () {
-#if ENABLE_DBUS
-			BusG.Init ();
+        public static async Task<IRemoteControl> GetInstanceAsync()
+        {
+            await EnsureBusInitialized();
 
-			if (! Bus.Session.NameHasOwner (Namespace))
-				Bus.Session.StartServiceByName (Namespace);
+            if (_remoteControlProxy == null)
+            {
+                _remoteControlProxy = _sessionBus.CreateProxy<IRemoteControl>(Namespace, Path);
+            }
 
-			return Bus.Session.GetObject<RemoteControl> (Namespace,
-			                new ObjectPath (Path));
-#else
-			RemoteControlWrapper remote = (RemoteControlWrapper) Activator.GetObject (
-				typeof (RemoteControlWrapper),
-				ServiceUrl);
+            return _remoteControlProxy;
+        }
 
-			return remote;
-#endif
-		}
+        public static async Task<RemoteControl> RegisterAsync(NoteManager manager)
+        {
+            if (!await FirstInstanceAsync())
+                return null;
 
-		public static RemoteControl Register (NoteManager manager)
-		{
-#if ENABLE_DBUS
-			if (!FirstInstance)
-				return null;
+            var remoteControl = new RemoteControl(manager, Path);
+            await _sessionBus.RegisterObjectAsync(remoteControl);
+            return remoteControl;
+        }
 
-			RemoteControl remote_control = new RemoteControl (manager);
-			Bus.Session.Register (new ObjectPath (Path),
-			                      remote_control);
-			return remote_control;
-#else
-			if (FirstInstance) {
-				// Register an IPC channel for .NET remoting
-				// access to our Remote Control
-				IpcChannel = new IpcChannel (ServerName);
-				ChannelServices.RegisterChannel (IpcChannel, false);
-				RemotingConfiguration.RegisterWellKnownServiceType (
-					typeof (RemoteControlWrapper),
-					WrapperName,
-					WellKnownObjectMode.Singleton);
+        public static async Task<bool> FirstInstanceAsync()
+        {
+            await EnsureBusInitialized();
 
-				// The actual Remote Control has many methods
-				// that need to be called in the GTK+ mainloop,
-				// which will not happen when the method calls
-				// come from a .NET remoting client. So we wrap
-				// the Remote Control in a class that implements
-				// the same interface, but wraps most method
-				// calls in Gtk.Application.Invoke.
-				//
-				// Note that only one RemoteControl is ever
-				// created, and that it is stored statically
-				// in the RemoteControlWrapper.
-				RemoteControl realRemote = new RemoteControl (manager);
-				RemoteControlWrapper.Initialize (realRemote);
+            if (!firstInstance.HasValue)
+            {
+                var dbus = _sessionBus.CreateProxy<IDBus>("org.freedesktop.DBus", "/org/freedesktop/DBus");
 
-				RemoteControlWrapper remoteWrapper = (RemoteControlWrapper) Activator.GetObject (
-					typeof (RemoteControlWrapper),
-					ServiceUrl);
-				return realRemote;
-			} else {
-				// If Tomboy is already running, register a
-				// client IPC channel.
-				IpcChannel = new IpcChannel (ClientName);
-				ChannelServices.RegisterChannel (IpcChannel, false);
-				return null;
-			}
-#endif
-		}
+                bool hasOwner = await dbus.NameHasOwnerAsync(Namespace);
+                if (!hasOwner)
+                {
+                    var reply = await dbus.RequestNameAsync(Namespace, RequestNameFlags.None);
+                    firstInstance = reply == RequestNameReply.PrimaryOwner;
+                }
+                else
+                {
+                    firstInstance = false;
+                }
+            }
 
-		public static bool FirstInstance {
-			get {
-#if ENABLE_DBUS
-				// We use DBus to provide single-instance detection
-				if (!firstInstance.HasValue) {
-					BusG.Init ();
-					firstInstance = Bus.Session.RequestName (Namespace) == RequestNameReply.PrimaryOwner;
-				}
-				return firstInstance.Value;
-#else
-				// Use a mutex to provide single-instance detection
-				if (mutex == null)
-					mutex = new Mutex (true, MutexName, out firstInstance);
-				return firstInstance;
-#endif
-			}
-		}
-	}
+            return firstInstance.Value;
+        }
+
+        private static async Task EnsureBusInitialized()
+        {
+            if (_sessionBus == null)
+            {
+                _sessionBus = new Connection(Address.Session);
+                await _sessionBus.ConnectAsync();
+            }
+        }
+    }
+    
+
+    [DBusInterface("org.freedesktop.DBus")]
+    public interface IDBus : IDBusObject
+    {
+        Task<bool> NameHasOwnerAsync(string name);
+        Task<RequestNameReply> RequestNameAsync(string name, RequestNameFlags flags);
+    }
+
+    public enum RequestNameReply
+    {
+        PrimaryOwner = 1,
+        InQueue = 2,
+        Exists = 3,
+        AlreadyOwner = 4
+    }
+
+    [Flags]
+    public enum RequestNameFlags : uint
+    {
+        None = 0,
+        AllowReplacement = 1,
+        ReplaceExisting = 2,
+        DoNotQueue = 4
+    }
 }

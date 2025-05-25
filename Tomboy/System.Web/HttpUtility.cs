@@ -40,7 +40,6 @@ using System.Text;
 namespace System.Web {
 
 	// CAS - no InheritanceDemand here as the class is sealed
-	[AspNetHostingPermission (SecurityAction.LinkDemand, Level = AspNetHostingPermissionLevel.Minimal)]
 	public sealed class HttpUtility {
 		#region Fields
 	

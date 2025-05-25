@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,7 +8,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 
-using Mono.Unix;
+using Tomboy.Compat;
 using Mono.Unix.Native;
 
 using Tomboy;

@@ -1,6 +1,6 @@
 using System;
 using Tomboy;
-using Mono.Unix;
+using Tomboy.Compat;
 
 namespace Tomboy.ExportToHtml
 {

@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Mono.Unix;
-using Tomboy;
+using Tomboy.Compat;
 using Tomboy.Notebooks;
 
 namespace Tomboy

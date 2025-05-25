@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.IO;
 
-using Mono.Unix;
+using Tomboy.Compat;
 
 using Tomboy.Sync;
 

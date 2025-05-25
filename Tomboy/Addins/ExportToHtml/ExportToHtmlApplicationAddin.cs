@@ -5,7 +5,7 @@ using System.Xml;
 using System.Xml.XPath;
 using System.Xml.Xsl;
 using Tomboy;
-using Mono.Unix;
+using Tomboy.Compat;
 
 namespace Tomboy.ExportToHtml
 {

@@ -100,3 +100,7 @@ Makefile.in
 # /Setup
 /Setup/bin/
 /Setup/obj/
+
+*.code-workspace
+/lib
+/build

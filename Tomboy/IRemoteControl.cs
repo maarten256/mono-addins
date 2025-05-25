@@ -1,8 +1,8 @@
-using System;
+using Tmds.DBus;
 
 namespace Tomboy
 {
-	public interface IRemoteControl
+	public interface IRemoteControl : IDBusObject
 	{
 		bool AddNotebook (string notebook_name);
 		bool AddNoteToNotebook (string uri, string notebook_name);

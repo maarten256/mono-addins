@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using Mono.Unix;
+using Tomboy.Compat;
 
 namespace Tomboy
 {

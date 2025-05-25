@@ -2,7 +2,7 @@
 // (C) 2006 Ryan Lortie <desrt@desrt.ca>, LGPL 2.1 or later.
 // vim:set sw=8 noet:
 
-using Mono.Unix;
+using Tomboy.Compat;
 using System;
 using Gtk;
 

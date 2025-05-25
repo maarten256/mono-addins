@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,7 +5,7 @@ using System.Reflection;
 using System.Xml;
 using System.Xml.XPath;
 using System.Xml.Xsl;
-using Mono.Unix;
+using Tomboy.Compat;
 
 using Tomboy;
 

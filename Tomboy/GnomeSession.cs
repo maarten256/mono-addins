@@ -21,8 +21,8 @@
 //
 
 using System;
-using DBus;
-using org.freedesktop.DBus;
+using System.Threading.Tasks;
+using Tmds.DBus;
 
 // Gnome Session DBus API
 // http://people.gnome.org/~mccann/gnome-session/docs/gnome-session.html
@@ -30,35 +30,36 @@ using org.freedesktop.DBus;
 // SessionManager
 namespace org.gnome.SessionManager
 {
-	public static class Constants
-	{
-		public const string SessionManagerPath = "/org/gnome/SessionManager";
-		public const string SessionManagerInterfaceName = "org.gnome.SessionManager";
-		public const string ClientPrivateInterfaceName = "org.gnome.SessionManager.ClientPrivate";
-	}
+    public static class Constants
+    {
+        public const string SessionManagerPath = "/org/gnome/SessionManager";
+        public const string SessionManagerInterfaceName = "org.gnome.SessionManager";
+        public const string ClientPrivateInterfaceName = "org.gnome.SessionManager.ClientPrivate";
+    }
 
-	[Interface (Constants.SessionManagerInterfaceName)]
-	public interface SessionManager
-	{
-		void Setenv (string variable, string val);
-		void InitializationError (string message, bool fatal);
-		ObjectPath RegisterClient (string app_id, string client_startup_id);
-		void UnregisterClient (ObjectPath client_id);
-	}
+    [DBusInterface(Constants.SessionManagerInterfaceName)]
+    public interface ISessionManager : IDBusObject
+    {
+        Task SetenvAsync(string variable, string val);
+        Task InitializationErrorAsync(string message, bool fatal);
+        Task<ObjectPath> RegisterClientAsync(string app_id, string client_startup_id);
+        Task UnregisterClientAsync(ObjectPath client_id);
+    }
 
-	public delegate void StopCallback ();
-	public delegate void QueryEndSessionCallback (uint flags);
-	public delegate void EndSessionCallback (uint flags);
-	public delegate void CancelEndSessionCallback ();
+    // Delegate signatures for events
+    public delegate void StopHandler();
+    public delegate void QueryEndSessionHandler(uint flags);
+    public delegate void EndSessionHandler(uint flags);
+    public delegate void CancelEndSessionHandler();
 
-	[Interface (Constants.ClientPrivateInterfaceName)]
-	public interface ClientPrivate : Introspectable, Properties
-	{
-		void EndSessionResponse (bool is_ok, string reason);
+    [DBusInterface(Constants.ClientPrivateInterfaceName)]
+    public interface IClientPrivate : IDBusObject
+    {
+        Task EndSessionResponseAsync(bool is_ok, string reason);
 
-		event StopCallback Stop;
-		event EndSessionCallback EndSession;
-		event QueryEndSessionCallback QueryEndSession;
-		event CancelEndSessionCallback CancelEndSession;
-	}
+        // Signals as events (Tmds.DBus signals return IDisposable for subscriptions)
+        Task<IDisposable> WatchStopAsync(Action handler);
+        Task<IDisposable> WatchEndSessionAsync(Action<uint> handler);
+        Task<IDisposable> WatchQueryEndSessionAsync(Action<uint> handler);
+    }
 }

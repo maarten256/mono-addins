@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Tomboy;
-using Mono.Unix;
+using Tomboy.Compat;
 
 namespace Tomboy.NoteOfTheDay
 {

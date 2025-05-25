@@ -26,7 +26,7 @@
 using System;
 using System.Web;
 
-using Mono.Unix;
+using Tomboy.Compat;
 using Tomboy.WebSync.Api;
 #if !WIN32
 using HL = System.Net;

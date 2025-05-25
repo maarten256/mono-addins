@@ -3,7 +3,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Collections.Generic;
 
-using Mono.Unix;
+using Tomboy.Compat;
 
 namespace Tomboy.Sync
 {

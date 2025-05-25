@@ -29,13 +29,13 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 using System.IO;
-using System.Text;
 using System.Xml;
 using System.Collections;
 using System.Collections.Generic;
-using Mono.Unix;
+
+using Tomboy.Compat;
+
 
 namespace Tomboy
 {
@@ -49,6 +49,7 @@ namespace Tomboy
 		public static Gdk.Pixbuf newNote;
 		public ActionManager ()
 		{
+			Logger.Debug ("Initializing ActionManager");
 			PopulateActionGroups ();
 			newNote  = GuiUtils.GetIcon("note-new", 16);       // FIXME: no access to icon theme?
 		}
@@ -122,6 +123,7 @@ namespace Tomboy
 			///
 			/// Global Actions
 			///
+			Logger.Debug ("Populating Global Actions");
 			main_window_actions.Add (new Gtk.ActionEntry [] {
 				new Gtk.ActionEntry ("FileMenuAction", null,
 				Catalog.GetString ("_File"), null, null, null),

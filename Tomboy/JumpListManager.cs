@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 using Tomboy.Windows.Interop;
 using IShellLink = Tomboy.Windows.Interop.IShellLinkW;
-using Mono.Unix;
+using Tomboy.Compat;
 
 namespace Tomboy
 {

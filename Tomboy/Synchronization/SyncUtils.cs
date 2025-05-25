@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
-using Mono.Unix;
+using Tomboy.Compat;
 
 namespace Tomboy.Sync
 {

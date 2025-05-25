@@ -1,4 +1,5 @@
 using System;
+using Tmds.DBus;
 
 namespace Tomboy
 {
@@ -22,10 +23,12 @@ namespace Tomboy
 		#endregion
 
 		#region IRemoteControl Members
+		
+		public ObjectPath ObjectPath => remote.ObjectPath;
 
-		public bool AddTagToNote (string uri, string tag_name)
+		public bool AddTagToNote(string uri, string tag_name)
 		{
-			return remote.AddTagToNote (uri, tag_name);
+			return remote.AddTagToNote(uri, tag_name);
 		}
 
 		public string CreateNamedNote (string linked_title)

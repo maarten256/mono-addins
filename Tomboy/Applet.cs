@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using Mono.Unix;
+using Tomboy.Compat;
 
 using Gnome;
 

@@ -1,10 +1,11 @@
 using System;
+using System.Threading.Tasks;
 
 namespace Tomboy
 {
 	public interface INativeApplication
 	{
-		void Initialize (string locale_dir,
+		Task Initialize (string locale_dir,
 		                 string display_name,
 		                 string process_name,
 		                 string [] args);

@@ -1,6 +1,6 @@
 using System;
 using Gtk;
-using Mono.Unix;
+using Tomboy.Compat;
 
 namespace Tomboy.Underline
 {

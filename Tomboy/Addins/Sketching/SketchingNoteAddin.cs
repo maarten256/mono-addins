@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using VirtualPaper;
 
-using Mono.Unix;
+using Tomboy.Compat;
 
 using Tomboy;
 

@@ -1,8 +1,7 @@
-
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Mono.Unix;
+using Tomboy.Compat;
 using Tomboy;
 
 namespace Tomboy.Tasks

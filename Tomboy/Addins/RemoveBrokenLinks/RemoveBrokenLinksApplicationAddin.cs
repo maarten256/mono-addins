@@ -4,7 +4,7 @@
 
 using System;
 using Gtk;
-using Mono.Unix;
+using Tomboy.Compat;
 using Tomboy;
 
 namespace Tomboy.RemoveBrokenLinks

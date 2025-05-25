@@ -1,9 +1,8 @@
-
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.IO;
-using Mono.Unix;
+using Tomboy.Compat;
 using Tomboy;
 using Gtk;
 using Gtk.Extras;

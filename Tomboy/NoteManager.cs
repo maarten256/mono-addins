@@ -4,7 +4,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading;
 
-using Mono.Unix;
+using Tomboy.Compat;
 
 namespace Tomboy
 {

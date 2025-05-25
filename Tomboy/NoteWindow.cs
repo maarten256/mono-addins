@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
-using Mono.Unix;
+using Tomboy.Compat;
 using Gtk;
 
 namespace Tomboy

@@ -1,5 +1,5 @@
 using Tomboy;
-using Mono.Unix;
+using Tomboy.Compat;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;

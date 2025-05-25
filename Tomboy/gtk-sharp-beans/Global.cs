@@ -24,9 +24,9 @@ using System.Runtime.InteropServices;
 namespace GtkBeans {
 	public static class Global {
 		[DllImport("libgtk-win32-2.0-0.dll")]
-		static extern unsafe bool gtk_show_uri(IntPtr screen, IntPtr uri, uint timestamp, out IntPtr error);
+		static extern bool gtk_show_uri(IntPtr screen, IntPtr uri, uint timestamp, out IntPtr error);
 
-		public static unsafe bool ShowUri(Gdk.Screen screen, string uri, uint timestamp) {
+		public static bool ShowUri(Gdk.Screen screen, string uri, uint timestamp) {
 			IntPtr native_uri = GLib.Marshaller.StringToPtrGStrdup (uri);
 			IntPtr error = IntPtr.Zero;
 			bool raw_ret = gtk_show_uri(screen == null ? IntPtr.Zero : screen.Handle, native_uri, timestamp, out error);

@@ -85,7 +85,7 @@ namespace Tomboy
 					html_transform = new XslTransform ();
 					var resource = typeof(NoteBuffer).Assembly.GetManifestResourceStream ("tomboy-note-clipboard-html.xsl");
 					var reader = new XmlTextReader (resource);
-					html_transform.Load (reader, null, null);
+					html_transform.Load (reader);
 					reader.Close ();
 				}
 				return html_transform;

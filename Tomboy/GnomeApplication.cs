@@ -2,31 +2,34 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.IO;
-using System.Xml;
-
-using Mono.Unix;
-using Mono.Unix.Native;
 
 using Hyena;
 
-using DBus;
-using org.gnome.SessionManager;
+using System.Threading.Tasks;
+using Tmds.DBus;
 
 namespace Tomboy
 {
-	public class GnomeApplication : INativeApplication
-	{
-#if PANEL_APPLET
-		private Gnome.Program program;
-#endif
+    public class GnomeApplication : INativeApplication
+    {
+        private Connection _connection;
+        private ISessionManager _sessionManager;
+        private IClientPrivate _clientPrivate;
+
+        private IDisposable _stopSubscription;
+        private IDisposable _endSessionSubscription;
+        private IDisposable _queryEndSessionSubscription;
+        private IDisposable _cancelEndSessionSubscription;
+
 		private static string confDir;
 		private static string dataDir;
 		private static string cacheDir;
-		private static ObjectPath session_client_id;
-		private const string tomboyDirName = "tomboy";
+        private static string tomboyDirName = "tomboy";
+        private ObjectPath _sessionClientId;
 
 		static GnomeApplication ()
 		{
+			Console.WriteLine ("In GnomeApplication(): Creating GnomeApplication...");
 			dataDir = Path.Combine (XdgBaseDirectorySpec.GetUserDirectory ("XDG_DATA_HOME",
 			                                                               Path.Combine (".local", "share")),
 			                        tomboyDirName);
@@ -43,45 +46,26 @@ namespace Tomboy
 				Directory.CreateDirectory (cacheDir);
 		}
 
-		public void Initialize (string locale_dir,
-		                        string display_name,
-		                        string process_name,
-		                        string [] args)
+		public async Task Initialize(string locale_dir,
+								string display_name,
+								string process_name,
+								string[] args)
 		{
-			try {
-				SetProcessName (process_name);
-			} catch {} // Ignore exception if fail (not needed to run)
-
-			// Register handler for saving session when logging out of Gnome
-			BusG.Init ();
-			string startup_id = Environment.GetEnvironmentVariable ("DESKTOP_AUTOSTART_ID");
-			if (String.IsNullOrEmpty (startup_id))
-				startup_id = display_name;
-
-			try {
-				SessionManager session = Bus.Session.GetObject<SessionManager> (Constants.SessionManagerInterfaceName,
-				                                                                new ObjectPath (Constants.SessionManagerPath));
-				session_client_id = session.RegisterClient (display_name, startup_id);
-				
-				ClientPrivate client = Bus.Session.GetObject<ClientPrivate> (Constants.SessionManagerInterfaceName,
-				                                                             session_client_id);
-				client.QueryEndSession += OnQueryEndSession;
-				client.EndSession += OnEndSession;
-				client.Stop += OnStop;
-			} catch (Exception e) {
-				Logger.Debug ("Failed to register with session manager: {0}", e.Message);
+			try
+			{
+				SetProcessName(process_name);
 			}
+			catch { } // Ignore exception if fail (not needed to run)
 
-			Gtk.Application.Init ();
-#if PANEL_APPLET
-			program = new Gnome.Program (display_name,
-			                             Defines.VERSION,
-			                             Gnome.Modules.UI,
-			                             args);
-#endif
-		}
+			Logger.Debug("In GnomeApplication::Initialize(): Initializing GnomeApplication with display name: {0}", display_name);
+			await InitializeAsync(display_name);
 
-		public void RegisterSessionManagerRestart (string executable_path,
+			Logger.Debug("In GnomeApplication::Initialize(): Initializing Gtk");
+			Gtk.Application.Init();
+			Logger.Debug("In GnomeApplication::Initialize(): Gtk initialized");
+        }
+
+        public void RegisterSessionManagerRestart (string executable_path,
 		                string[] args,
 		                string[] environment)
 		{
@@ -89,15 +73,23 @@ namespace Tomboy
 			// folder which should be enough to handle this in Gnome
 		}
 
-		public void RegisterSignalHandlers ()
+        public void RegisterSignalHandlers ()
 		{
-			// Connect to SIGTERM and SIGINT, so we don't lose
+			// Connect to SIGTERM and SIGINT using UnixSignal, so we don't lose
 			// unsaved notes on exit...
-			Stdlib.signal (Signum.SIGTERM, OnExitSignal);
-			Stdlib.signal (Signum.SIGINT, OnExitSignal);
+			Task.Run(() =>
+			{
+				var sigterm = new Mono.Unix.UnixSignal(Mono.Unix.Native.Signum.SIGTERM);
+				var sigint = new Mono.Unix.UnixSignal(Mono.Unix.Native.Signum.SIGINT);
+				while (true)
+				{
+					int index = Mono.Unix.UnixSignal.WaitAny(new[] { sigterm, sigint });
+					OnExitSignal(-1);
+				}
+			});
 		}
 
-		public event EventHandler ExitingEvent;
+        public event EventHandler ExitingEvent;
 
 		public void Exit (int exitcode)
 		{
@@ -107,90 +99,13 @@ namespace Tomboy
 
 		public void StartMainLoop ()
 		{
-#if PANEL_APPLET
-			program.Run ();
-#else
 			Gtk.Application.Run ();
-#endif
 		}
 
-		[DllImport("libc")]
-		private static extern int prctl (int option,
-			                                 byte [] arg2,
-			                                 IntPtr arg3,
-			                                 IntPtr arg4,
-			                                 IntPtr arg5);
-
-		// From Banshee: Banshee.Base/Utilities.cs
-		private void SetProcessName (string name)
-		{
-			if (prctl (15 /* PR_SET_NAME */,
-			                Encoding.ASCII.GetBytes (name + "\0"),
-			                IntPtr.Zero,
-			                IntPtr.Zero,
-			                IntPtr.Zero) != 0)
-				throw new ApplicationException (
-				        "Error setting process name: " +
-				        Mono.Unix.Native.Stdlib.GetLastError ());
+        public string DataDirectory {
+			get { return dataDir; }
 		}
 
-		private void OnExitSignal (int signal)
-		{
-			if (ExitingEvent != null)
-				ExitingEvent (null, new EventArgs ());
-
-			if (signal >= 0)
-				System.Environment.Exit (0);
-		}
-
-		private void OnStop () {
-			Exit(0);
-		}
-
-		private void OnQueryEndSession (uint flags)
-		{
-			Logger.Info ("Received end session query");
-
-			// The session might not actually end but it would be nice to start
-			// some cleanup actions like saving notes here
-
-			// Let the session manager know its OK to continue
-			try {
-				ClientPrivate client = Bus.Session.GetObject<ClientPrivate> (Constants.SessionManagerInterfaceName,
-				                                                             session_client_id);
-				client.EndSessionResponse(true, String.Empty);
-			} catch (Exception e) {
-				Logger.Debug("Failed to respond to session manager: {0}", e.Message);
-			}
-		}
-
-		private void OnEndSession (uint flags)
-		{
-			Logger.Info ("Received end session signal");
-
-			if (ExitingEvent != null)
-				ExitingEvent (null, new EventArgs ());
-
-			// Let the session manager know its OK to continue
-			// Ideally we would wait for all the exit events to finish
-			try {
-				ClientPrivate client = Bus.Session.GetObject<ClientPrivate> (Constants.SessionManagerInterfaceName,
-				                                                             session_client_id);
-				client.EndSessionResponse (true, String.Empty);
-			} catch (Exception e) {
-				Logger.Debug ("Failed to respond to session manager: {0}", e.Message);
-			}
-			Exit (0);
-		}
-		
-		public void OpenUrl (string url, Gdk.Screen screen)
-		{
-			GtkBeans.Global.ShowUri (screen, url);
-		}
-
-		[DllImport ("glib-2.0.dll")]
-		static extern IntPtr g_get_language_names ();
-		
 		public void DisplayHelp (string project, string page, Gdk.Screen screen)
 		{
 			string helpUrl = string.Format("http://library.gnome.org/users/{0}/", project);
@@ -209,14 +124,16 @@ namespace Tomboy
 
 			OpenUrl (helpUrl, screen);
 		}
-		
-		public string DataDirectory {
-			get { return dataDir; }
-		}
 
-		public string ConfigurationDirectory {
-			get { return confDir; }
-		}
+        public void OpenUrl(string url, Gdk.Screen screen)
+        {
+            GtkBeans.Global.ShowUri(screen, url);
+        }
+
+        public string ConfigurationDirectory
+        {
+            get { return confDir; }
+        }
 
 		public string CacheDirectory {
 			get { return cacheDir; }
@@ -232,5 +149,110 @@ namespace Tomboy
 				                     ".tomboy");
 			}
 		}
-	}
+
+		[DllImport ("glib-2.0.dll")]
+		static extern IntPtr g_get_language_names ();
+
+        [DllImport("libc")]
+		private static extern int prctl (int option,
+			                                 byte [] arg2,
+			                                 IntPtr arg3,
+			                                 IntPtr arg4,
+			                                 IntPtr arg5);
+
+		private static void SetProcessName (string name)
+		{
+			if (prctl (15 /* PR_SET_NAME */,
+			                Encoding.ASCII.GetBytes (name + "\0"),
+			                IntPtr.Zero,
+			                IntPtr.Zero,
+			                IntPtr.Zero) != 0)
+				throw new ApplicationException (
+				        "Error setting process name: " +
+				        Mono.Unix.Native.Stdlib.GetLastError ());
+		}
+
+        private void OnExitSignal(int signal)
+        {
+            if (ExitingEvent != null)
+                ExitingEvent(null, new EventArgs());
+
+            if (signal >= 0)
+                System.Environment.Exit(0);
+        }
+
+		private void OnStop () {
+			Exit(0);
+		}
+
+        private async void OnQueryEndSession(uint flags)
+        {
+            Logger.Info("Received end session query");
+
+            try {
+                if (_clientPrivate != null)
+                    await _clientPrivate.EndSessionResponseAsync(true, string.Empty);
+            } catch (Exception e) {
+                Logger.Debug("Failed to respond to session manager: {0}", e.Message);
+            }
+        }
+
+		private async void OnEndSession (uint flags)
+		{
+			Logger.Info ("Received end session signal");
+
+			if (ExitingEvent != null)
+				ExitingEvent (null, new EventArgs ());
+
+			// Let the session manager know its OK to continue
+			// Ideally we would wait for all the exit events to finish
+			try {
+                if (_clientPrivate != null)
+                    await _clientPrivate.EndSessionResponseAsync(true, string.Empty);
+			} catch (Exception e) {
+				Logger.Debug ("Failed to respond to session manager: {0}", e.Message);
+			}
+			Exit (0);
+		}
+
+        private async Task InitializeAsync(string displayName)
+        {
+			Logger.Debug("In GnomeApplication::InitializeAsync()");
+            _connection = Connection.Session;
+            _sessionManager = _connection.CreateProxy<ISessionManager>(
+                Constants.SessionManagerInterfaceName,
+                new ObjectPath(Constants.SessionManagerPath));
+
+            string startupId = Environment.GetEnvironmentVariable("DESKTOP_AUTOSTART_ID") ?? displayName;
+
+            try
+            {
+                // Register client and get ObjectPath for session client
+                _sessionClientId = await _sessionManager.RegisterClientAsync(displayName, startupId);
+
+                // Create ClientPrivate proxy
+                _clientPrivate = _connection.CreateProxy<IClientPrivate>(
+                    Constants.SessionManagerInterfaceName,
+                    _sessionClientId);
+
+                // Subscribe to signals
+                _stopSubscription = await _clientPrivate.WatchStopAsync(OnStop);
+                _endSessionSubscription = await _clientPrivate.WatchEndSessionAsync(OnEndSession);
+                _queryEndSessionSubscription = await _clientPrivate.WatchQueryEndSessionAsync(OnQueryEndSession);
+            }
+            catch (Exception e)
+            {
+                Logger.Debug($"Failed to register with session manager: {e.Message}");
+            }
+        }
+
+        public void Dispose()
+        {
+            _stopSubscription?.Dispose();
+            _endSessionSubscription?.Dispose();
+            _queryEndSessionSubscription?.Dispose();
+            _cancelEndSessionSubscription?.Dispose();
+            _connection?.Dispose();
+        }
+    }
 }

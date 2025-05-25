@@ -1,5 +1,5 @@
 using System;
-//using Mono.Unix; // TODO: Add this file to the POTFILES.in if Catalog.GetString is used here
+//using Tomboy.Compat; // TODO: Add this file to the POTFILES.in if Catalog.GetString is used here
 using Tomboy;
 
 namespace Tomboy.Notebooks

@@ -4,7 +4,7 @@
 using System;
 using System.IO;
 using System.Xml;
-using Mono.Unix;
+using Tomboy.Compat;
 
 using Tomboy;
 

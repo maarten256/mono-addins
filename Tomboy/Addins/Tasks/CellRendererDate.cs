@@ -1,6 +1,5 @@
-
 using System;
-using Mono.Unix;
+using Tomboy.Compat;
 using Gtk;
 
 namespace Gtk.Extras
