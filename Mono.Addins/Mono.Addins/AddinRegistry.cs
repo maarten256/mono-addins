@@ -185,10 +185,10 @@ namespace Mono.Addins
 		
 		internal AddinRegistry (AddinEngine engine, string registryPath, string startupDirectory, string addinsDir, string databaseDir)
 		{
-			basePath = Path.GetFullPath (Util.NormalizePath (registryPath));
+			basePath = Path.GetFullPath (Mono.Addins.Compat.NormalizePath.Normalize (registryPath));
 			
 			if (addinsDir != null) {
-				addinsDir = Util.NormalizePath (addinsDir);
+				addinsDir = Mono.Addins.Compat.NormalizePath.Normalize (addinsDir);
 				if (Path.IsPathRooted (addinsDir))
 					this.addinsDir = Path.GetFullPath (addinsDir);
 				else
@@ -197,7 +197,7 @@ namespace Mono.Addins
 				this.addinsDir = Path.Combine (basePath, "addins");
 			
 			if (databaseDir != null) {
-				databaseDir = Util.NormalizePath (databaseDir);
+				databaseDir = Mono.Addins.Compat.NormalizePath.Normalize (databaseDir);
 				if (Path.IsPathRooted (databaseDir))
 					this.databaseDir = Path.GetFullPath (databaseDir);
 				else
@@ -216,7 +216,7 @@ namespace Mono.Addins
 			
 			// Get the domain corresponding to the startup folder
 			if (startupDirectory != null && startupDirectory.Length > 0) {
-				this.startupDirectory = Util.NormalizePath (startupDirectory);
+				this.startupDirectory = Mono.Addins.Compat.NormalizePath.Normalize (startupDirectory);
 				currentDomain = database.GetFolderDomain (null, this.startupDirectory);
 			} else
 				currentDomain = AddinDatabase.GlobalDomain;
@@ -258,7 +258,7 @@ namespace Mono.Addins
 			get {
 				string customDir = Environment.GetEnvironmentVariable ("MONO_ADDINS_GLOBAL_REGISTRY");
 				if (customDir != null && customDir.Length > 0)
-					return Path.GetFullPath (Util.NormalizePath (customDir));
+					return Path.GetFullPath (Mono.Addins.Compat.NormalizePath.Normalize (customDir));
 				
 				string path = Environment.GetFolderPath (Environment.SpecialFolder.ApplicationData); 
 				path = Path.Combine (path, "mono.addins");

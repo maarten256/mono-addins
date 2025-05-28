@@ -1,0 +1,4 @@
+/source/mono-addins/bin/Mono.Addins.CecilReflector.dll.mdb
+/source/mono-addins/bin/Mono.Addins.CecilReflector.dll
+/source/mono-addins/Mono.Addins.CecilReflector/obj/Debug/Mono.Addins.CecilReflector.dll
+/source/mono-addins/Mono.Addins.CecilReflector/obj/Debug/Mono.Addins.CecilReflector.dll.mdb

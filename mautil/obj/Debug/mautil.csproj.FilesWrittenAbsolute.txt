@@ -1,0 +1,4 @@
+/source/mono-addins/bin/mautil.exe.mdb
+/source/mono-addins/bin/mautil.exe
+/source/mono-addins/mautil/obj/Debug/mautil.exe
+/source/mono-addins/mautil/obj/Debug/mautil.exe.mdb

@@ -141,6 +141,7 @@
     <Compile Include="Mono.Addins\AddinPropertyAttribute.cs" />
     <Compile Include="Mono.Addins\AddinNameAttribute.cs" />
     <Compile Include="Mono.Addins\AddinDescriptionAttribute.cs" />
+    <Compile Include="Internal\NormalizePath.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ChangeLog" />
