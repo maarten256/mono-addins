@@ -1,4 +1,0 @@
-/source/mono-addins/bin/Mono.Addins.dll.mdb
-/source/mono-addins/bin/Mono.Addins.dll
-/source/mono-addins/Mono.Addins/obj/Debug/Mono.Addins.dll
-/source/mono-addins/Mono.Addins/obj/Debug/Mono.Addins.dll.mdb

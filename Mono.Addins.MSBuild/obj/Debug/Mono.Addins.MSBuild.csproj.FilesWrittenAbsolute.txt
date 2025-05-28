@@ -1,4 +1,0 @@
-/source/mono-addins/bin/Mono.Addins.MSBuild.dll.mdb
-/source/mono-addins/bin/Mono.Addins.MSBuild.dll
-/source/mono-addins/Mono.Addins.MSBuild/obj/Debug/Mono.Addins.MSBuild.dll
-/source/mono-addins/Mono.Addins.MSBuild/obj/Debug/Mono.Addins.MSBuild.dll.mdb
