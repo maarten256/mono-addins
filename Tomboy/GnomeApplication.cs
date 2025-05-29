@@ -99,6 +99,7 @@ namespace Tomboy
 
 		public void StartMainLoop ()
 		{
+			Logger.Debug ("Kicking off Gtk main loop...");
 			Gtk.Application.Run ();
 		}
 

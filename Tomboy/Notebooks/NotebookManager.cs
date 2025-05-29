@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Tomboy.Compat;
-using Tomboy;
 
 namespace Tomboy.Notebooks
 {
@@ -61,7 +60,7 @@ namespace Tomboy.Notebooks
 		#endregion // Constructors
 		
 		#region Properties
-		public static Gtk.TreeModel Notebooks
+		public static Gtk.ITreeModel Notebooks
 		{
 			get {
 				return filteredNotebooks;
@@ -79,7 +78,7 @@ namespace Tomboy.Notebooks
 		/// <returns>
 		/// A <see cref="Notebook"/>
 		/// </returns>
-		public static Gtk.TreeModel NotebooksWithSpecialItems
+		public static Gtk.ITreeModel NotebooksWithSpecialItems
 		{
 			get {
 				return sortedNotebooks;
@@ -317,12 +316,10 @@ namespace Tomboy.Notebooks
 		public static Notebook PromptCreateNewNotebook (Gtk.Window parent, List<Note> notesToAdd)
 		{
 			// Prompt the user for the name of a new notebook
-			Notebooks.CreateNotebookDialog dialog =
-				new Notebooks.CreateNotebookDialog (parent,
-							Gtk.DialogFlags.Modal
-								| Gtk.DialogFlags.DestroyWithParent
-								| Gtk.DialogFlags.NoSeparator);
-			
+			CreateNotebookDialog dialog = new(parent,
+											Gtk.DialogFlags.Modal |
+											Gtk.DialogFlags.DestroyWithParent |
+											Gtk.DialogFlags.UseHeaderBar);
 			
 			int response = dialog.Run ();
 			string notebookName = dialog.NotebookName;
@@ -330,7 +327,7 @@ namespace Tomboy.Notebooks
 			if (response != (int) Gtk.ResponseType.Ok)
 				return null;
 			
-			Notebooks.Notebook notebook = GetOrCreateNotebook (notebookName);
+			Notebook notebook = GetOrCreateNotebook (notebookName);
 			if (notebook == null) {
 				Logger.Warn ("Could not create notebook: {0}", notebookName);
 			} else {
@@ -339,7 +336,7 @@ namespace Tomboy.Notebooks
 				if (notesToAdd != null) {
 					// Move all the specified notesToAdd into the new notebook
 					foreach (Note note in notesToAdd) {
-						NotebookManager.MoveNoteToNotebook (note, notebook);
+						MoveNoteToNotebook (note, notebook);
 					}
 				}
 			}
@@ -447,7 +444,7 @@ namespace Tomboy.Notebooks
 		#endregion // Public Methods
 		
 		#region Private Methods
-		static int CompareNotebooksSortFunc (Gtk.TreeModel model,
+		static int CompareNotebooksSortFunc (Gtk.ITreeModel model,
 											 Gtk.TreeIter a,
 											 Gtk.TreeIter b)
 		{
@@ -498,7 +495,7 @@ namespace Tomboy.Notebooks
 	        /// <summary>
 	        /// Filter out SpecialNotebooks from the model
 	        /// </summary>
-	        static bool FilterNotebooks (Gtk.TreeModel model, Gtk.TreeIter iter)
+	        static bool FilterNotebooks (Gtk.ITreeModel model, Gtk.TreeIter iter)
 	        {
 	        	Notebook notebook = model.GetValue (iter, 0) as Notebook;
 	        	if (notebook == null || notebook is SpecialNotebook)

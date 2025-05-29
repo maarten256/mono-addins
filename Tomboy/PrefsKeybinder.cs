@@ -18,6 +18,8 @@ namespace Tomboy
 		                  string       default_binding,
 		                  EventHandler handler)
 		{
+			Logger.Debug ("In Bind: {0} with default {1}",
+			              pref_path, default_binding);
 			try {
 				Binding binding = new Binding (pref_path,
 				                               default_binding,
@@ -55,6 +57,8 @@ namespace Tomboy
 			                EventHandler    handler,
 			                IKeybinder native_keybinder)
 			{
+				Logger.Debug ("Constructing Binding for '{0}' with default '{1}'",
+				            pref_path, default_binding);
 				this.pref_path = pref_path;
 				this.key_sequence = default_binding;
 				this.handler = handler;
@@ -69,6 +73,8 @@ namespace Tomboy
 
 				SetBinding ();
 
+				Logger.Debug ("About to add notify for '{0}'",
+				            pref_path);
 				Preferences.Client.AddNotify (
 				        pref_path,
 				        BindingChanged);
@@ -131,6 +137,7 @@ namespace Tomboy
 		public TomboyPrefsKeybinder (NoteManager manager, ITomboyTray tray)
 				: base ()
 		{
+			Logger.Debug ("Constructing TomboyPrefsKeybinder");
 			this.manager = manager;
 			this.tray = tray;
 
@@ -172,6 +179,7 @@ namespace Tomboy
 
 		void BindPreference (string pref_path, EventHandler handler)
 		{
+			Logger.Debug ("In BindPreference: {0}", pref_path);
 			Bind (pref_path,
 			      (string) Preferences.GetDefault (pref_path),
 			      handler);
@@ -179,6 +187,7 @@ namespace Tomboy
 
 		void KeyShowMenu (object sender, EventArgs args)
 		{
+			Logger.Debug ("In KeyShowMenu");
 			// Show the notes menu, highlighting the first item.
 			// This matches the behavior of GTK for
 			// accelerator-shown menus.

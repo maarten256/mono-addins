@@ -1,18 +1,20 @@
-
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Xml;
 
+using Tomboy.Compat;
+
 namespace Tomboy
 {
-	public delegate bool TagActivatedHandler (NoteTag tag,
-	                NoteEditor editor,
-	                Gtk.TextIter start,
-	                Gtk.TextIter end);
-	
-	public enum TagSaveType {
+	public delegate bool TagActivatedHandler(NoteTag tag,
+					NoteEditor editor,
+					Gtk.TextIter start,
+					Gtk.TextIter end);
+
+	public enum TagSaveType
+	{
 		NoSave,
 		Meta,
 		Content
@@ -26,7 +28,8 @@ namespace Tomboy
 		bool allow_middle_activate = false;
 
 		[Flags]
-		enum TagFlags {
+		enum TagFlags
+		{
 			CanSerialize = 1,
 			CanUndo = 2,
 			CanGrow = 4,
@@ -37,33 +40,34 @@ namespace Tomboy
 
 		TagFlags flags;
 
-		public NoteTag (string tag_name)
+		public NoteTag(string tag_name)
 : base(tag_name)
 		{
-			if (tag_name == null || tag_name == "") {
-				throw new Exception ("NoteTags must have a tag name.  Use " +
-				                     "DynamicNoteTag for constructing " +
-				                     "anonymous tags.");
+			if (tag_name == null || tag_name == "")
+			{
+				throw new Exception("NoteTags must have a tag name.  Use " +
+									 "DynamicNoteTag for constructing " +
+									 "anonymous tags.");
 			}
 
-			Initialize (tag_name);
+			Initialize(tag_name);
 		}
 
-		internal NoteTag ()
-: base (null)
+		internal NoteTag()
+: base(null)
 		{
 			// Constructor used (only) by DynamicNoteTag
 			// Initialize() is called by NoteTagTable.Create().
 		}
 
-		public NoteTag (IntPtr raw)
-: base (raw)
+		public NoteTag(IntPtr raw)
+: base(raw)
 		{
-			Logger.Info ("{0} IntPtr initializer called!", GetType());
-			Logger.Info ((new System.Diagnostics.StackTrace()).ToString());
+			Logger.Info("{0} IntPtr initializer called!", GetType());
+			Logger.Info((new System.Diagnostics.StackTrace()).ToString());
 		}
 
-		public virtual void Initialize (string element_name)
+		public virtual void Initialize(string element_name)
 		{
 			this.element_name = element_name;
 
@@ -73,11 +77,12 @@ namespace Tomboy
 
 		public string ElementName
 		{
-			get {
+			get
+			{
 				return element_name;
 			}
 		}
-		
+
 		/// <summary>
 		/// How the note should be saved when this tag is modified
 		/// </summary>
@@ -85,10 +90,12 @@ namespace Tomboy
 
 		public bool CanSerialize
 		{
-			get {
+			get
+			{
 				return (flags & TagFlags.CanSerialize) != 0;
 			}
-			set {
+			set
+			{
 				if (value)
 					flags |= TagFlags.CanSerialize;
 				else
@@ -98,10 +105,12 @@ namespace Tomboy
 
 		public bool CanUndo
 		{
-			get {
+			get
+			{
 				return (flags & TagFlags.CanUndo) != 0;
 			}
-			set {
+			set
+			{
 				if (value)
 					flags |= TagFlags.CanUndo;
 				else
@@ -111,10 +120,12 @@ namespace Tomboy
 
 		public bool CanGrow
 		{
-			get {
+			get
+			{
 				return (flags & TagFlags.CanGrow) != 0;
 			}
-			set {
+			set
+			{
 				if (value)
 					flags |= TagFlags.CanGrow;
 				else
@@ -124,10 +135,12 @@ namespace Tomboy
 
 		public bool CanSpellCheck
 		{
-			get {
+			get
+			{
 				return (flags & TagFlags.CanSpellCheck) != 0;
 			}
-			set {
+			set
+			{
 				if (value)
 					flags |= TagFlags.CanSpellCheck;
 				else
@@ -137,10 +150,12 @@ namespace Tomboy
 
 		public bool CanActivate
 		{
-			get {
+			get
+			{
 				return (flags & TagFlags.CanActivate) != 0;
 			}
-			set {
+			set
+			{
 				if (value)
 					flags |= TagFlags.CanActivate;
 				else
@@ -150,10 +165,12 @@ namespace Tomboy
 
 		public bool CanSplit
 		{
-			get {
+			get
+			{
 				return (flags & TagFlags.CanSplit) != 0;
 			}
-			set {
+			set
+			{
 				if (value)
 					flags |= TagFlags.CanSplit;
 				else
@@ -161,126 +178,137 @@ namespace Tomboy
 			}
 		}
 
-		public void GetExtents (Gtk.TextIter iter,
-		                        out Gtk.TextIter start,
-		                        out Gtk.TextIter end)
+		public void GetExtents(Gtk.TextIter iter,
+								out Gtk.TextIter start,
+								out Gtk.TextIter end)
 		{
 			start = iter;
-			if (!start.BeginsTag (this))
-				start.BackwardToTagToggle (this);
+			if (!start.BeginsTag(this))
+				start.BackwardToTagToggle(this);
 
 			end = iter;
-			end.ForwardToTagToggle (this);
+			end.ForwardToTagToggle(this);
 		}
 
 		// XmlTextWriter is required, because an XmlWriter created with
 		// XmlWriter.Create considers ":" to be an invalid character
 		// for an element name.
 		// http://bugzilla.gnome.org/show_bug.cgi?id=559094
-		public virtual void Write (XmlTextWriter xml, bool start)
+		public virtual void Write(XmlTextWriter xml, bool start)
 		{
-			if (CanSerialize) {
-				if (start) {
-					xml.WriteStartElement (null, element_name, null);
-				} else {
+			if (CanSerialize)
+			{
+				if (start)
+				{
+					xml.WriteStartElement(null, element_name, null);
+				}
+				else
+				{
 					xml.WriteEndElement();
 				}
 			}
 		}
 
-		public virtual void Read (XmlTextReader xml, bool start)
+		public virtual void Read(XmlTextReader xml, bool start)
 		{
-			if (CanSerialize) {
-				if (start) {
+			if (CanSerialize)
+			{
+				if (start)
+				{
 					element_name = xml.Name;
 				}
 			}
 		}
 
-		protected override bool OnTextEvent (GLib.Object  sender,
-		                                     Gdk.Event    ev,
-		                                     Gtk.TextIter iter)
+		protected override bool OnTextEvent(GLib.Object sender,
+											 Gdk.Event ev,
+											 Gtk.TextIter iter)
 		{
-			NoteEditor editor = (NoteEditor) sender;
+			NoteEditor editor = (NoteEditor)sender;
 			Gtk.TextIter start, end;
 
 			if (!CanActivate)
 				return false;
 
-			switch (ev.Type) {
-			case Gdk.EventType.ButtonPress:
-				Gdk.EventButton button_ev = new Gdk.EventButton (ev.Handle);
+			switch (ev.Type)
+			{
+				case Gdk.EventType.ButtonPress:
+					Gdk.EventButton button_ev = new Gdk.EventButton(ev.Handle);
 
-				// Do not insert selected text when activating links with
-				// middle mouse button
-				if (button_ev.Button == 2) {
-					allow_middle_activate = true;
-					return true;
-				}
+					// Do not insert selected text when activating links with
+					// middle mouse button
+					if (button_ev.Button == 2)
+					{
+						allow_middle_activate = true;
+						return true;
+					}
 
-				return false;
-
-			case Gdk.EventType.ButtonRelease:
-				button_ev = new Gdk.EventButton (ev.Handle);
-
-				if (button_ev.Button != 1 && button_ev.Button != 2)
 					return false;
 
-				/* Don't activate if Shift or Control is pressed */
-				if ((int) (button_ev.State & (Gdk.ModifierType.ShiftMask |
-				                              Gdk.ModifierType.ControlMask)) != 0)
+				case Gdk.EventType.ButtonRelease:
+					button_ev = new Gdk.EventButton(ev.Handle);
+
+					if (button_ev.Button != 1 && button_ev.Button != 2)
+						return false;
+
+					/* Don't activate if Shift or Control is pressed */
+					if ((int)(button_ev.State & (Gdk.ModifierType.ShiftMask |
+												  Gdk.ModifierType.ControlMask)) != 0)
+						return false;
+
+					// Prevent activation when selecting links with the mouse
+					if (editor.Buffer.HasSelection)
+						return false;
+
+					// Don't activate if the link has just been pasted with the
+					// middle mouse button (no preceding ButtonPress event)
+					if (button_ev.Button == 2 && !allow_middle_activate)
+						return false;
+					else
+						allow_middle_activate = false;
+
+					GetExtents(iter, out start, out end);
+					bool success = OnActivate(editor, start, end);
+
+					// Hide note if link is activated with middle mouse button
+					if (success && button_ev.Button == 2)
+					{
+						Gtk.Widget widget = (Gtk.Widget)sender;
+						widget.Toplevel.Hide();
+					}
+
 					return false;
 
-				// Prevent activation when selecting links with the mouse
-				if (editor.Buffer.HasSelection)
-					return false;
+				case Gdk.EventType.KeyPress:
+					Gdk.EventKey key_ev = new Gdk.EventKey(ev.Handle);
 
-				// Don't activate if the link has just been pasted with the
-				// middle mouse button (no preceding ButtonPress event)
-				if (button_ev.Button == 2 && !allow_middle_activate)
-					return false;
-				else
-					allow_middle_activate = false;
+					// Control-Enter activates the link at point...
+					if ((int)(key_ev.State & Gdk.ModifierType.ControlMask) == 0)
+						return false;
 
-				GetExtents (iter, out start, out end);
-				bool success = OnActivate (editor, start, end);
+					if (key_ev.Key != Gdk.Key.Return &&
+									key_ev.Key != Gdk.Key.KP_Enter)
+						return false;
 
-				// Hide note if link is activated with middle mouse button
-				if (success && button_ev.Button == 2) {
-					Gtk.Widget widget = (Gtk.Widget) sender;
-					widget.Toplevel.Hide ();
-				}
-
-				return false;
-
-			case Gdk.EventType.KeyPress:
-				Gdk.EventKey key_ev = new Gdk.EventKey (ev.Handle);
-
-				// Control-Enter activates the link at point...
-				if ((int) (key_ev.State & Gdk.ModifierType.ControlMask) == 0)
-					return false;
-
-				if (key_ev.Key != Gdk.Key.Return &&
-				                key_ev.Key != Gdk.Key.KP_Enter)
-					return false;
-
-				GetExtents (iter, out start, out end);
-				return OnActivate (editor, start, end);
+					GetExtents(iter, out start, out end);
+					return OnActivate(editor, start, end);
 			}
 
 			return false;
 		}
 
-		protected virtual bool OnActivate (NoteEditor editor,
-		                                   Gtk.TextIter start,
-		                                   Gtk.TextIter end)
+		protected virtual bool OnActivate(NoteEditor editor,
+										   Gtk.TextIter start,
+										   Gtk.TextIter end)
 		{
 			bool retval = false;
 
-			if (Activated != null) {
-				foreach (Delegate d in Activated.GetInvocationList()) {
-					TagActivatedHandler handler = (TagActivatedHandler) d;
-					retval |= handler (this, editor, start, end);
+			if (Activated != null)
+			{
+				foreach (Delegate d in Activated.GetInvocationList())
+				{
+					TagActivatedHandler handler = (TagActivatedHandler)d;
+					retval |= handler(this, editor, start, end);
 				}
 			}
 
@@ -291,45 +319,55 @@ namespace Tomboy
 
 		public virtual Gdk.Pixbuf Image
 		{
-			get {
+			get
+			{
 				Gtk.Image image = widget as Gtk.Image;
 				if (image == null) return null;
 
 				return image.Pixbuf;
 			}
-			set {
-				if (value == null) {
+			set
+			{
+				if (value == null)
+				{
 					Widget = null;
 					return;
 				}
 
-				Gtk.Image image = new Gtk.Image (value);
+				Gtk.Image image = new Gtk.Image(value);
 				Widget = image;
 			}
 		}
 
 		public virtual Gtk.Widget Widget
 		{
-			get {
+			get
+			{
 				return widget;
 			}
-			set {
-				if (value == null && widget != null) {
-					widget.Destroy ();
+			set
+			{
+				if (value == null && widget != null)
+				{
+					widget.Destroy();
 					widget = null;
 				}
 
 				widget = value;
 
-				if (Changed != null) {
-					Gtk.TagChangedArgs args = new Gtk.TagChangedArgs ();
-					args.Args = new object [2];
-					args.Args [0] = false; // SizeChanged
-					args.Args [1] = this;  // Tag
-					try {
-						Changed (this, args);
-					} catch (Exception e) {
-						Logger.Warn ("Exception calling TagChanged from NoteTag.set_Widget: {0}", e.Message);
+				if (Changed != null)
+				{
+					Gtk.TagChangedArgs args = new Gtk.TagChangedArgs();
+					args.Args = new object[2];
+					args.Args[0] = false; // SizeChanged
+					args.Args[1] = this;  // Tag
+					try
+					{
+						Changed(this, args);
+					}
+					catch (Exception e)
+					{
+						Logger.Warn("Exception calling TagChanged from NoteTag.set_Widget: {0}", e.Message);
 					}
 				}
 			}
@@ -337,10 +375,12 @@ namespace Tomboy
 
 		public virtual Gtk.TextMark WidgetLocation
 		{
-			get {
+			get
+			{
 				return widgetLocation;
 			}
-			set {
+			set
+			{
 				widgetLocation = value;
 			}
 		}
@@ -352,15 +392,29 @@ namespace Tomboy
 			if (BackgroundSet)
 				return BackgroundGdk;
 
-			Gtk.Style s = Gtk.Rc.GetStyleByPaths(Gtk.Settings.Default,
-			                                     "GtkTextView", "GtkTextView", Gtk.TextView.GType);
-			if (s == null) {
-				Logger.Debug ("get_background: Style for GtkTextView came back null! Returning white...");
-				return new Gdk.Color (0xff, 0xff, 0xff); //white, for lack of a better idea
-			}
-			else
-				return s.Background(Gtk.StateType.Normal);
-		}
+            // More futzing around with background colors... Replacing with
+			// something more Gtk 3 ish.
+			// TODO: Assess if the old code can be deleted.
+			// Gtk.Style s = Gtk.Rc.GetStyleByPaths(Gtk.Settings.Default,
+			//                                      "GtkTextView", "GtkTextView", Gtk.TextView.GType);
+
+			// if (s == null)
+			// {
+			// 	Logger.Debug("get_background: Style for GtkTextView came back null! Returning white...");
+			// 	return new Gdk.Color(0xff, 0xff, 0xff); //white, for lack of a better idea
+			// }
+			// else
+			// 	return s.Background(Gtk.StateType.Normal);
+
+			using var textView = new Gtk.TextView();
+            var context = textView.StyleContext;
+            Gtk.StateFlags state = textView.StateFlags;
+
+            if (context.LookupColor("background-color", out Gdk.RGBA color))
+                return CompatUtils.RgbaToColor(color);
+
+            return CompatUtils.RgbaToColor(context.GetColor(state));
+        }
 
 		Gdk.Color render_foreground(ContrastPaletteColor symbol)
 		{
@@ -368,13 +422,16 @@ namespace Tomboy
 		}
 
 		private ContrastPaletteColor PaletteForeground_;
-		public ContrastPaletteColor PaletteForeground {
-			set {
+		public ContrastPaletteColor PaletteForeground
+		{
+			set
+			{
 				PaletteForeground_ = value;
 				// XXX We should also watch theme changes.
 				ForegroundGdk = render_foreground(value);
 			}
-			get {
+			get
+			{
 				return PaletteForeground_;
 			}
 		}
@@ -386,52 +443,59 @@ namespace Tomboy
 	{
 		Dictionary<string, string> attributes;
 
-		public DynamicNoteTag ()
+		public DynamicNoteTag()
 : base()
 		{
 		}
 
 		public IDictionary<string, string> Attributes
 		{
-			get {
+			get
+			{
 				if (attributes == null)
-					attributes = new Dictionary<string, string> ();
+					attributes = new Dictionary<string, string>();
 				return attributes;
 			}
 		}
 
-		public override void Write (XmlTextWriter xml, bool start)
+		public override void Write(XmlTextWriter xml, bool start)
 		{
-			if (CanSerialize) {
-				base.Write (xml, start);
+			if (CanSerialize)
+			{
+				base.Write(xml, start);
 
-				if (start && attributes != null) {
-					foreach (string key in attributes.Keys) {
-						string val = attributes [key];
-						xml.WriteAttributeString (null, key, null, val);
+				if (start && attributes != null)
+				{
+					foreach (string key in attributes.Keys)
+					{
+						string val = attributes[key];
+						xml.WriteAttributeString(null, key, null, val);
 					}
 				}
 			}
 		}
 
-		public override void Read (XmlTextReader xml, bool start)
+		public override void Read(XmlTextReader xml, bool start)
 		{
-			if (CanSerialize) {
-				base.Read (xml, start);
+			if (CanSerialize)
+			{
+				base.Read(xml, start);
 
-				if (start) {
-					while (xml.MoveToNextAttribute()) {
+				if (start)
+				{
+					while (xml.MoveToNextAttribute())
+					{
 						string name = xml.Name;
 
 						xml.ReadAttributeValue();
-						Attributes [name] = xml.Value;
+						Attributes[name] = xml.Value;
 
-						OnAttributeRead (name);
-						Logger.Debug (
-						        "NoteTag: {0} read attribute {1}='{2}'",
-						        ElementName,
-						        name,
-						        xml.Value);
+						OnAttributeRead(name);
+						Logger.Debug(
+								"NoteTag: {0} read attribute {1}='{2}'",
+								ElementName,
+								name,
+								xml.Value);
 					}
 				}
 			}
@@ -445,7 +509,7 @@ namespace Tomboy
 		/// A <see cref="System.String"/> that is the name of the
 		/// newly read attribute.
 		/// </param>
-		protected virtual void OnAttributeRead (string attributeName) {}
+		protected virtual void OnAttributeRead(string attributeName) { }
 	}
 
 	public class DepthNoteTag : NoteTag
@@ -455,40 +519,46 @@ namespace Tomboy
 
 		public int Depth
 		{
-			get{
+			get
+			{
 				return depth;
 			}
 		}
 
 		public new Pango.Direction Direction
 		{
-			get{
+			get
+			{
 				return direction;
 			}
 		}
 
-		public DepthNoteTag (int depth, Pango.Direction direction)
+		public DepthNoteTag(int depth, Pango.Direction direction)
 : base("depth:" + depth + ":" + direction)
 		{
 			this.depth = depth;
 			this.direction = direction;
 		}
 
-		public override void Write (XmlTextWriter xml, bool start)
+		public override void Write(XmlTextWriter xml, bool start)
 		{
-			if (CanSerialize) {
-				if (start) {
-					xml.WriteStartElement (null, "list-item", null);
+			if (CanSerialize)
+			{
+				if (start)
+				{
+					xml.WriteStartElement(null, "list-item", null);
 
 					// Write the list items writing direction
-					xml.WriteStartAttribute (null, "dir", null);
+					xml.WriteStartAttribute(null, "dir", null);
 					if (Direction == Pango.Direction.Rtl)
-						xml.WriteString ("rtl");
+						xml.WriteString("rtl");
 					else
-						xml.WriteString ("ltr");
-					xml.WriteEndAttribute ();
-				} else {
-					xml.WriteEndElement ();
+						xml.WriteString("ltr");
+					xml.WriteEndAttribute();
+				}
+				else
+				{
+					xml.WriteEndElement();
 				}
 			}
 		}
@@ -502,20 +572,21 @@ namespace Tomboy
 
 		public static NoteTagTable Instance
 		{
-			get {
+			get
+			{
 				if (instance == null)
-					instance = new NoteTagTable ();
+					instance = new NoteTagTable();
 				return instance;
 			}
 		}
 
-		public NoteTagTable ()
-: base ()
+		public NoteTagTable()
+: base()
 		{
-			tag_types = new Dictionary<string, Type> ();
-			added_tags = new List<Gtk.TextTag> ();
+			tag_types = new Dictionary<string, Type>();
+			added_tags = new List<Gtk.TextTag>();
 
-			InitCommonTags ();
+			InitCommonTags();
 		}
 
 		public NoteTag UrlTag { get; private set; }
@@ -523,177 +594,177 @@ namespace Tomboy
 		public NoteTag BrokenLinkTag { get; private set; }
 		public NoteTag SearchMatchTag { get; private set; }
 
-		void InitCommonTags ()
+		void InitCommonTags()
 		{
 			NoteTag tag;
 
 			// Font stylings
 
-			tag = new NoteTag ("centered");
+			tag = new NoteTag("centered");
 			tag.Justification = Gtk.Justification.Center;
 			tag.CanUndo = true;
 			tag.CanGrow = true;
 			tag.CanSpellCheck = true;
-			Add (tag);
+			Add(tag);
 
-			tag = new NoteTag ("bold");
+			tag = new NoteTag("bold");
 			tag.Weight = Pango.Weight.Bold;
 			tag.CanUndo = true;
 			tag.CanGrow = true;
 			tag.CanSpellCheck = true;
-			Add (tag);
+			Add(tag);
 
-			tag = new NoteTag ("italic");
+			tag = new NoteTag("italic");
 			tag.Style = Pango.Style.Italic;
 			tag.CanUndo = true;
 			tag.CanGrow = true;
 			tag.CanSpellCheck = true;
-			Add (tag);
+			Add(tag);
 
-			tag = new NoteTag ("strikethrough");
+			tag = new NoteTag("strikethrough");
 			tag.Strikethrough = true;
 			tag.CanUndo = true;
 			tag.CanGrow = true;
 			tag.CanSpellCheck = true;
-			Add (tag);
+			Add(tag);
 
-			tag = new NoteTag ("highlight");
+			tag = new NoteTag("highlight");
 			tag.Background = "yellow";
 			tag.CanUndo = true;
 			tag.CanGrow = true;
 			tag.CanSpellCheck = true;
-			Add (tag);
+			Add(tag);
 
-			tag = new NoteTag ("find-match");
-			tag.BackgroundGdk = GuiUtils.GetSearchMatchColor ();
+			tag = new NoteTag("find-match");
+			tag.BackgroundGdk = GuiUtils.GetSearchMatchColor();
 			tag.CanSerialize = false;
 			tag.CanSpellCheck = true;
 			tag.SaveType = TagSaveType.Meta;
-			Add (tag);
+			Add(tag);
 			SearchMatchTag = tag;
 
-			tag = new NoteTag ("note-title");
+			tag = new NoteTag("note-title");
 			tag.Underline = Pango.Underline.Single;
 			tag.PaletteForeground =
-			        ContrastPaletteColor.Blue;
+					ContrastPaletteColor.Blue;
 			tag.Scale = Pango.Scale.XXLarge;
 			// FiXME: Hack around extra rewrite on open
 			tag.CanSerialize = false;
 			tag.SaveType = TagSaveType.Meta;
-			Add (tag);
+			Add(tag);
 
-			tag = new NoteTag ("related-to");
+			tag = new NoteTag("related-to");
 			tag.Scale = Pango.Scale.Small;
 			tag.LeftMargin = 40;
 			tag.Editable = false;
 			tag.SaveType = TagSaveType.Meta;
-			Add (tag);
+			Add(tag);
 
-			tag = new NoteTag ("datetime");
+			tag = new NoteTag("datetime");
 			tag.Scale = Pango.Scale.Small;
 			tag.Style = Pango.Style.Italic;
 			tag.PaletteForeground =
-			        ContrastPaletteColor.Grey;
+					ContrastPaletteColor.Grey;
 			tag.CanGrow = true;
 			tag.SaveType = TagSaveType.Meta;
-			Add (tag);
+			Add(tag);
 
 			// Font sizes
 
-			tag = new NoteTag ("size:huge");
+			tag = new NoteTag("size:huge");
 			tag.Scale = Pango.Scale.XXLarge;
 			tag.CanUndo = true;
 			tag.CanGrow = true;
 			tag.CanSpellCheck = true;
-			Add (tag);
+			Add(tag);
 
-			tag = new NoteTag ("size:large");
+			tag = new NoteTag("size:large");
 			tag.Scale = Pango.Scale.XLarge;
 			tag.CanUndo = true;
 			tag.CanGrow = true;
 			tag.CanSpellCheck = true;
-			Add (tag);
+			Add(tag);
 
-			tag = new NoteTag ("size:normal");
+			tag = new NoteTag("size:normal");
 			tag.Scale = Pango.Scale.Medium;
 			tag.CanUndo = true;
 			tag.CanGrow = true;
 			tag.CanSpellCheck = true;
-			Add (tag);
+			Add(tag);
 
-			tag = new NoteTag ("size:small");
+			tag = new NoteTag("size:small");
 			tag.Scale = Pango.Scale.Small;
 			tag.CanUndo = true;
 			tag.CanGrow = true;
 			tag.CanSpellCheck = true;
-			Add (tag);
+			Add(tag);
 
 			// Links
 
-			tag = new NoteTag ("link:broken");
+			tag = new NoteTag("link:broken");
 			tag.Underline = Pango.Underline.Single;
 			tag.PaletteForeground =
-			        ContrastPaletteColor.Grey;
+					ContrastPaletteColor.Grey;
 			tag.CanActivate = true;
 			tag.SaveType = TagSaveType.Meta;
-			Add (tag);
+			Add(tag);
 			BrokenLinkTag = tag;
 
-			tag = new NoteTag ("link:internal");
+			tag = new NoteTag("link:internal");
 			tag.Underline = Pango.Underline.Single;
 			tag.PaletteForeground =
-			        ContrastPaletteColor.Blue;
+					ContrastPaletteColor.Blue;
 			tag.CanActivate = true;
 			tag.SaveType = TagSaveType.Meta;
-			Add (tag);
+			Add(tag);
 			LinkTag = tag;
 
-			tag = new NoteTag ("link:url");
+			tag = new NoteTag("link:url");
 			tag.Underline = Pango.Underline.Single;
 			tag.PaletteForeground =
-			        ContrastPaletteColor.Blue;
+					ContrastPaletteColor.Blue;
 			tag.CanActivate = true;
 			tag.SaveType = TagSaveType.Meta;
-			Add (tag);
+			Add(tag);
 			UrlTag = tag;
 		}
 
-		public static bool TagIsSerializable (Gtk.TextTag tag)
+		public static bool TagIsSerializable(Gtk.TextTag tag)
 		{
 			if (tag is NoteTag)
-				return ((NoteTag) tag).CanSerialize;
+				return ((NoteTag)tag).CanSerialize;
 			return false;
 		}
 
-		public static bool TagIsGrowable (Gtk.TextTag tag)
+		public static bool TagIsGrowable(Gtk.TextTag tag)
 		{
 			if (tag is NoteTag)
-				return ((NoteTag) tag).CanGrow;
+				return ((NoteTag)tag).CanGrow;
 			return false;
 		}
 
-		public static bool TagIsUndoable (Gtk.TextTag tag)
+		public static bool TagIsUndoable(Gtk.TextTag tag)
 		{
 			if (tag is NoteTag)
-				return ((NoteTag) tag).CanUndo;
+				return ((NoteTag)tag).CanUndo;
 			return false;
 		}
 
-		public static bool TagIsSpellCheckable (Gtk.TextTag tag)
+		public static bool TagIsSpellCheckable(Gtk.TextTag tag)
 		{
 			if (tag is NoteTag)
-				return ((NoteTag) tag).CanSpellCheck;
+				return ((NoteTag)tag).CanSpellCheck;
 			return false;
 		}
 
-		public static bool TagIsActivatable (Gtk.TextTag tag)
+		public static bool TagIsActivatable(Gtk.TextTag tag)
 		{
 			if (tag is NoteTag)
-				return ((NoteTag) tag).CanActivate;
+				return ((NoteTag)tag).CanActivate;
 			return false;
 		}
 
-		public static bool TagHasDepth (Gtk.TextTag tag)
+		public static bool TagHasDepth(Gtk.TextTag tag)
 		{
 			if (tag is DepthNoteTag)
 				return true;
@@ -701,43 +772,44 @@ namespace Tomboy
 			return false;
 		}
 
-		public bool HasLinkTag (Gtk.TextIter iter)
+		public bool HasLinkTag(Gtk.TextIter iter)
 		{
-			return iter.HasTag (LinkTag) || iter.HasTag (UrlTag) || iter.HasTag (BrokenLinkTag);
+			return iter.HasTag(LinkTag) || iter.HasTag(UrlTag) || iter.HasTag(BrokenLinkTag);
 		}
 
 		public DepthNoteTag GetDepthTag(int depth, Pango.Direction direction)
 		{
 			string name = "depth:" + depth + ":" + direction;
 
-			DepthNoteTag tag = Lookup (name) as DepthNoteTag;
+			DepthNoteTag tag = Lookup(name) as DepthNoteTag;
 
-			if (tag == null) {
-				tag = new DepthNoteTag (depth, direction);
+			if (tag == null)
+			{
+				tag = new DepthNoteTag(depth, direction);
 				tag.Indent = -14;
 
 				if (direction == Pango.Direction.Rtl)
-					tag.RightMargin = (depth+1) * 25;
+					tag.RightMargin = (depth + 1) * 25;
 				else
-					tag.LeftMargin = (depth+1) * 25;
+					tag.LeftMargin = (depth + 1) * 25;
 
 				tag.PixelsBelowLines = 4;
 				tag.Scale = Pango.Scale.Medium;
-				Add (tag);
+				Add(tag);
 			}
 
 			return tag;
 		}
-		
+
 		/// <summary>
 		/// Maps a Gtk.TextTag to ChangeType for saving notes
 		/// </summary>
 		/// <param name="tag">Gtk.TextTag to map</param>
 		/// <returns>ChangeType to save this NoteTag</returns>
-		public ChangeType GetChangeType (Gtk.TextTag tag)
+		public ChangeType GetChangeType(Gtk.TextTag tag)
 		{
 			ChangeType change;
-			
+
 			// Use tag Name for Gtk.TextTags
 			switch (tag.Name)
 			{
@@ -746,10 +818,11 @@ namespace Tomboy
 					change = ChangeType.OtherDataChanged;
 					break;
 			}
-			
+
 			// Use SaveType for NoteTags
 			NoteTag note_tag = tag as NoteTag;
-			if (note_tag != null) {
+			if (note_tag != null)
+			{
 				switch (note_tag.SaveType)
 				{
 					case TagSaveType.Meta:
@@ -764,63 +837,66 @@ namespace Tomboy
 						break;
 				}
 			}
-			
+
 			return change;
 		}
 
-		public DynamicNoteTag CreateDynamicTag (string tag_name)
+		public DynamicNoteTag CreateDynamicTag(string tag_name)
 		{
 			Type tag_type;
-			if (!tag_types.TryGetValue (tag_name, out tag_type))
+			if (!tag_types.TryGetValue(tag_name, out tag_type))
 				return null;
 
-			DynamicNoteTag tag = (DynamicNoteTag) Activator.CreateInstance(tag_type);
-			tag.Initialize (tag_name);
-			Add (tag);
+			DynamicNoteTag tag = (DynamicNoteTag)Activator.CreateInstance(tag_type);
+			tag.Initialize(tag_name);
+			Add(tag);
 			return tag;
 		}
 
-		public void RegisterDynamicTag (string tag_name, Type type)
+		public void RegisterDynamicTag(string tag_name, Type type)
 		{
-			if (!type.IsSubclassOf (typeof (DynamicNoteTag)))
-				throw new Exception ("Must register only DynamicNoteTag types.");
+			if (!type.IsSubclassOf(typeof(DynamicNoteTag)))
+				throw new Exception("Must register only DynamicNoteTag types.");
 
-			tag_types [tag_name] = type;
+			tag_types[tag_name] = type;
 		}
 
-		public bool IsDynamicTagRegistered (string tag_name)
+		public bool IsDynamicTagRegistered(string tag_name)
 		{
 			Type type;
-			if (tag_types.TryGetValue (tag_name, out type) &&
-			    type != null)
+			if (tag_types.TryGetValue(tag_name, out type) &&
+				type != null)
 				return true;
 			return false;
 		}
 
-		protected override void OnTagAdded (Gtk.TextTag tag)
+		protected override void OnTagAdded(Gtk.TextTag tag)
 		{
-			added_tags.Add (tag);
+			added_tags.Add(tag);
 
 			NoteTag note_tag = tag as NoteTag;
-			if (note_tag != null) {
+			if (note_tag != null)
+			{
 				note_tag.Changed += OnTagChanged;
 			}
 		}
 
-		protected override void OnTagRemoved (Gtk.TextTag tag)
+		protected override void OnTagRemoved(Gtk.TextTag tag)
 		{
-			added_tags.Remove (tag);
+			added_tags.Remove(tag);
 
 			NoteTag note_tag = tag as NoteTag;
-			if (note_tag != null) {
+			if (note_tag != null)
+			{
 				note_tag.Changed -= OnTagChanged;
 			}
 		}
 
-		void OnTagChanged (object sender, Gtk.TagChangedArgs args)
+		void OnTagChanged(object sender, Gtk.TagChangedArgs args)
 		{
-			if (TagChanged != null) {
-				TagChanged (this, args);
+			if (TagChanged != null)
+			{
+				TagChanged(this, args);
 			}
 		}
 

@@ -31,6 +31,10 @@
 #include "tomboykeybinder.h"
 #include "tomboyutil.h"
 
+#ifndef GDK_WINDOW_XWINDOW
+#define GDK_WINDOW_XWINDOW(win) (gdk_x11_window_get_xid(win))
+#endif
+
 /* Uncomment the next line to print a debug trace. */
 /* #define DEBUG */
 

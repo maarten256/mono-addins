@@ -1,6 +1,7 @@
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
+using System.Reflection;
 
 namespace Tomboy
 {
@@ -8,12 +9,12 @@ namespace Tomboy
 
 	public interface ILogger
 	{
-		void Log (Level lvl, string msg, params object[] args);
+		void Log(Level lvl, CallerContext context, string msg, params object[] args);
 	}
 
 	class NullLogger : ILogger
 	{
-		public void Log (Level lvl, string msg, params object[] args)
+		public void Log(Level lvl, CallerContext context, string msg, params object[] args)
 		{
 		}
 	}
@@ -38,19 +39,20 @@ namespace Tomboy
 		}
 #endif
 
-		public void Log (Level lvl, string msg, params object[] args)
+		public void Log(Level lvl, CallerContext context, string msg, params object[] args)
 		{
-			Console.Write ("[{0} {1:00}:{2:00}:{3:00}.{4:000}]",
-			               Enum.GetName (typeof (Level), lvl),
-			               DateTime.Now.Hour,
-			               DateTime.Now.Minute,
-			               DateTime.Now.Second,
-			               DateTime.Now.Millisecond);
-			msg = string.Format (" {0}", msg);
-			if (args.Length > 0)
-				Console.WriteLine (msg, args);
+			Console.Write("[{0} {1:00}:{2:00}:{3:00}.{4:000}{5}]",
+						   Enum.GetName(typeof(Level), lvl),
+						   DateTime.Now.Hour,
+						   DateTime.Now.Minute,
+						   DateTime.Now.Second,
+						   DateTime.Now.Millisecond,
+						   context.ToString());
+			msg = string.Format(" {0}", msg);
+			if (args?.Length > 0)
+				Console.WriteLine(msg, args);
 			else
-				Console.WriteLine (msg);
+				Console.WriteLine(msg);
 		}
 	}
 
@@ -59,62 +61,84 @@ namespace Tomboy
 		StreamWriter log;
 		ConsoleLogger console;
 
-		public FileLogger ()
+		public FileLogger()
 		{
-			console = new ConsoleLogger ();
+			console = new ConsoleLogger();
 
 			string logDir = Services.NativeApplication.LogDirectory;
 			string logfile = Path.Combine(
 				logDir,
 				"tomboy.log");
 
-			try {
-				if (!Directory.Exists (logDir))
-					Directory.CreateDirectory (logDir);
-				log = File.CreateText (logfile);
-				log.Flush ();
-			} catch (IOException iox) {
-				console.Log(Level.WARN, 
-					"Failed to create the logfile at {0}: {1}",
-					logfile, iox.Message);
-			} catch (UnauthorizedAccessException uax) {
+			try
+			{
+				if (!Directory.Exists(logDir))
+					Directory.CreateDirectory(logDir);
+				log = File.CreateText(logfile);
+				log.Flush();
+			}
+			catch (IOException iox)
+			{
 				console.Log(Level.WARN,
-					"Failed to create the logfile at {0}: {1}",
-					logfile, uax.Message);
+							new(MethodBase.GetCurrentMethod()?.DeclaringType?.FullName +
+								"." + MethodBase.GetCurrentMethod()?.Name),
+							"Failed to create the logfile at {0}: {1}",
+							logfile, iox.Message);
+			}
+			catch (UnauthorizedAccessException uax)
+			{
+				console.Log(Level.WARN,
+								new(MethodBase.GetCurrentMethod()?.DeclaringType?.FullName +
+									"." + MethodBase.GetCurrentMethod()?.Name),
+								"Failed to create the logfile at {0}: {1}",
+								logfile, uax.Message);
 			}
 		}
 
-		~FileLogger ()
+		~FileLogger()
 		{
 			if (log != null)
-				try {
-					log.Flush ();
-				} catch { }
+				try
+				{
+					log.Flush();
+				}
+				catch { }
 		}
 
-		public void Log (Level lvl, string msg, params object[] args)
+		public void Log(Level lvl, CallerContext context, string msg, params object[] args)
 		{
-			console.Log (lvl, msg, args);
+			console.Log(lvl, context, msg, args);
 
-			if (log != null) {
-				msg = string.Format ("{0} [{1}]: {2}",
-				                     DateTime.Now.ToString(),
-				                     Enum.GetName (typeof (Level), lvl),
-				                     msg);
-				try {
-					if (args.Length > 0)
-						log.WriteLine (msg, args);
+			if (log != null)
+			{
+				msg = string.Format("{0} [{1}]{2}: {3}",
+									 DateTime.Now.ToString(),
+									 Enum.GetName(typeof(Level), lvl),
+									 context.ToString(),
+									 msg);
+				try
+				{
+					if (args?.Length > 0)
+						log.WriteLine(msg, args);
 					else
-						log.WriteLine (msg);
+						log.WriteLine(msg);
 					log.Flush();
-				} catch (IOException iox) {
+				}
+				catch (IOException iox)
+				{
 					console.Log(Level.ERROR,
-					            "Failed to write to the log file due to IO exception: {0}",
-					            iox.Message);
-				} catch (Exception ex) {
+								new(MethodBase.GetCurrentMethod()?.DeclaringType?.FullName +
+									"." + MethodBase.GetCurrentMethod()?.Name),
+								"Failed to write to the log file due to IO exception: {0}",
+								iox.Message);
+				}
+				catch (Exception ex)
+				{
 					console.Log(Level.ERROR,
-					            "Failed to write to the log file due to exception: {0}, stack trace: {1}",
-					            ex.Message, ex.StackTrace);
+								new(MethodBase.GetCurrentMethod()?.DeclaringType?.FullName +
+									"." + MethodBase.GetCurrentMethod()?.Name),
+								"Failed to write to the log file due to exception: {0}, stack trace: {1}",
+								ex.Message, ex.StackTrace);
 				}
 			}
 		}
@@ -127,59 +151,112 @@ namespace Tomboy
 	{
 		private static Level log_level = Level.DEBUG;
 
-		static ILogger log_dev = new FileLogger ();
+		static ILogger log_dev = new FileLogger();
 
 		static bool muted = false;
 
 		public static Level LogLevel
 		{
-			get {
+			get
+			{
 				return log_level;
 			}
-			set {
+			set
+			{
 				log_level = value;
 			}
 		}
 
 		public static ILogger LogDevice
 		{
-			get {
+			get
+			{
 				return log_dev;
 			}
-			set {
+			set
+			{
 				log_dev = value;
 			}
 		}
 
-		public static void Debug (string msg, params object[] args)
+		public static void Debug(string msg,
+								Gtk.License _ = Gtk.License.Gpl20,
+								// This is a hack to allow the use of the [Caller...] attributes
+								// without having to pass the parameters explicitly.
+								// The _ parameter is never used, but it allows the compiler to
+								// automatically fill in the caller information.
+								[CallerFilePath] string file = "",
+								[CallerLineNumber] int line = 0,
+								[CallerMemberName] string member = "")
 		{
-			Log (Level.DEBUG, msg, args);
+			Log(Level.DEBUG, new(file, line, member), msg, null);
 		}
 
-		public static void Info (string msg, params object[] args)
+		public static void Debug(string msg,
+								params object[] args)
 		{
-			Log (Level.INFO, msg, args);
+			Log(Level.DEBUG, new(), msg, args);
 		}
 
-		public static void Warn (string msg, params object[] args)
+		public static void Info(string msg,
+			[CallerFilePath] string file = "",
+			[CallerLineNumber] int line = 0,
+			[CallerMemberName] string member = "")
 		{
-			Log (Level.WARN, msg, args);
+			Log(Level.INFO, new(file, line, member), msg, null);
 		}
 
-		public static void Error (string msg, params object[] args)
+		public static void Info(string msg,
+			params object[] args)
 		{
-			Log (Level.ERROR, msg, args);
+			Log(Level.INFO, new(), msg, args);
 		}
 
-		public static void Fatal (string msg, params object[] args)
+		public static void Warn(string msg,
+			[CallerFilePath] string file = "",
+			[CallerLineNumber] int line = 0,
+			[CallerMemberName] string member = "")
 		{
-			Log (Level.FATAL, msg, args);
+			Log(Level.WARN, new(file, line, member), msg, null);
 		}
 
-		public static void Log (Level lvl, string msg, params object[] args)
+		public static void Warn(string msg,
+			params object[] args)
+		{
+			Log(Level.WARN, new(), msg, args);
+		}
+
+		public static void Error(string msg,
+			[CallerFilePath] string file = "",
+			[CallerLineNumber] int line = 0,
+			[CallerMemberName] string member = "")
+		{
+			Log(Level.ERROR, new(file, line, member), msg, null);
+		}
+		public static void Error(string msg,
+			params object[] args)
+		{
+			Log(Level.ERROR, new(), msg, args);
+		}
+
+		public static void Fatal(string msg,
+			[CallerFilePath] string file = "",
+			[CallerLineNumber] int line = 0,
+			[CallerMemberName] string member = "")
+		{
+			Log(Level.FATAL, new(file, line, member), msg, null);
+		}
+
+		public static void Fatal(string msg,
+		 	params object[] args)
+		{
+			Log(Level.FATAL, new(), msg, args);
+		}
+
+		public static void Log(Level lvl, CallerContext context, string msg, params object[] args)
 		{
 			if (!muted && lvl >= log_level)
-				log_dev.Log (lvl, msg, args);
+				log_dev.Log(lvl, context, msg, args);
 		}
 
 		// This is here to support the original logging, but it should be
@@ -187,19 +264,54 @@ namespace Tomboy
 		// call one of the level specific log methods.
 		[Obsolete("Loger.Log is deprecated and should be replaced " +
 			"with calls to the level specific log methods")]
-		public static void Log (string msg, params object[] args)
+		public static void Log(string msg, CallerContext context, params object[] args)
 		{
-			Log (Level.DEBUG, msg, args);
+			Log(Level.DEBUG, context, msg, args);
 		}
 
-		public static void Mute ()
+		public static void Mute()
 		{
 			muted = true;
 		}
 
-		public static void Unmute ()
+		public static void Unmute()
 		{
 			muted = false;
+		}
+	}
+
+	public readonly struct CallerContext
+	{
+		public string File { get; }
+		public int Line { get; }
+		public string Member { get; }
+
+		public CallerContext()
+		{
+			File = "N/A"; // Optional: shorten file name
+			Line = -1;
+			Member = "N/A";
+		}
+		public CallerContext(string file, int line, string member)
+		{
+			File = System.IO.Path.GetFileName(file); // Optional: shorten file name
+			Line = line;
+			Member = member;
+		}
+
+		public CallerContext(string file)
+		{
+			File = System.IO.Path.GetFileName(file); // Optional: shorten file name
+			Line = -1;
+			Member = "N/A";
+		}
+
+		public override string ToString()
+		{
+			if (Line < 0)
+				return "";
+
+			return $" {File}:{Line} ({Member})";
 		}
 	}
 }

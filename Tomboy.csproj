@@ -35,14 +35,11 @@
     <Reference Include="Mono.Addins">
       <HintPath>lib/Mono.Addins.dll</HintPath>
     </Reference>
-    <Reference Include="Mono.Addins.Gui">
+    <!-- <Reference Include="Mono.Addins.Gui">
       <HintPath>lib/Mono.Addins.Gui.dll</HintPath>
-    </Reference>
+    </Reference> -->
     <Reference Include="Mono.Addins.Setup">
       <HintPath>lib/Mono.Addins.Setup.dll</HintPath>
-    </Reference>
-    <Reference Include="gtk-sharp">
-      <HintPath>lib/gtk-sharp.dll</HintPath>
     </Reference>
     <Reference Include="gconf-sharp">
       <HintPath>lib/gconf-sharp.dll</HintPath>
@@ -55,18 +52,6 @@
     </Reference>
     <Reference Include="dbus-sharp-glib">
       <HintPath>lib/dbus-sharp-glib.dll</HintPath>
-    </Reference>
-    <Reference Include="gdk-sharp">
-      <HintPath>lib/gdk-sharp.dll</HintPath>
-    </Reference>
-    <Reference Include="glib-sharp">
-      <HintPath>lib/glib-sharp.dll</HintPath>
-    </Reference>
-    <Reference Include="pango-sharp">
-      <HintPath>lib/pango-sharp.dll</HintPath>
-    </Reference>
-    <Reference Include="atk-sharp">
-      <HintPath>lib/atk-sharp.dll</HintPath>
     </Reference>
   </ItemGroup>
 
@@ -128,6 +113,7 @@
 -->
 
   <ItemGroup>
+    <PackageReference Include="GtkSharp" Version="3.24.24.95" />
     <PackageReference Include="mono.posix" Version="7.1.0-final.1.21458.1" />
     <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
     <PackageReference Include="Tmds.DBus" Version="0.21.2" />

@@ -28,7 +28,7 @@ using Tmds.DBus;
 // http://people.gnome.org/~mccann/gnome-session/docs/gnome-session.html
 // Here we've defined only what's needed to register and respond to the
 // SessionManager
-namespace org.gnome.SessionManager
+namespace Tomboy
 {
     public static class Constants
     {

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Tomboy.Compat;
-using System.Runtime.InteropServices;
+
 #if !WIN32 && !MAC
 using GtkBeans;
 #endif
@@ -137,7 +137,7 @@ namespace Tomboy
 	}
 	
 	
-	public class TomboyTrayIcon : Gtk.StatusIcon, ITomboyTray
+	public class TomboyTrayIcon : CompatTrayIcon, ITomboyTray
 	{
 		TomboyTray tray;
 		TomboyPrefsKeybinder keybinder;
@@ -146,6 +146,8 @@ namespace Tomboy
 
 		public TomboyTrayIcon (NoteManager manager)
 		{
+			Logger.Debug ("Constructing TomboyTrayIcon");
+
 			tray = new TomboyTray (manager, this);
 			keybinder = new TomboyPrefsKeybinder (manager, this);
 			int panel_size = 22;
@@ -157,12 +159,14 @@ namespace Tomboy
 				GuiUtils.GetIcon ("tomboy", panel_size);
 
 			Tooltip = TomboyTrayUtils.GetToolTipText ();
+			Logger.Debug ($"Tooltip: {0}", Tooltip);
 
 			Visible = (bool) Preferences.Get (Preferences.ENABLE_TRAY_ICON);
 			Preferences.SettingChanged += (o, args) => {
 				if (args.Key == Preferences.ENABLE_TRAY_ICON)
 					Visible = (bool) args.Value;
 			};
+			Logger.Debug ("$Visible: {0}", Visible);
 
 			Tomboy.ExitingEvent += OnExit;
 #if MAC
@@ -385,6 +389,7 @@ namespace Tomboy
 		public TomboyTray (NoteManager manager, ITomboyTray tray)
 			: this (manager)
 		{
+			Logger.Debug ("Constructing Tray");
 			this.tray = tray;
 		}
 		

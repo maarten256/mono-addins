@@ -6,7 +6,7 @@ using Gtk;
 
 namespace Tomboy.Sync
 {
-	public class SyncDialog : Gtk.Dialog, ISyncUI
+	public class SyncDialog : CompatDialog, ISyncUI
 	{
 		private Gtk.Image image;
 		private Gtk.Label headerLabel;
@@ -22,14 +22,15 @@ namespace Tomboy.Sync
 
 		// TODO: Possible to make Tomboy not crash if quit while dialog is up?
 		public SyncDialog ()
-: base (string.Empty,
-		        null,
-		        Gtk.DialogFlags.DestroyWithParent)
+		: base (null,
+		        DialogFlags.DestroyWithParent,
+				string.Empty)
 		{
 			progressBarTimeoutId = 0;
 
 			SetSizeRequest (400, -1);
-			HasSeparator = false;
+			// TODO: Assess if something like this is needed
+			// HasSeparator = false;
 
 			// Outer box. Surrounds all of our content.
 			VBox outerVBox = new VBox (false, 12);
@@ -69,10 +70,8 @@ namespace Tomboy.Sync
 			messageLabel.Show ();
 			vbox.PackStart (messageLabel, false, false, 0);
 
-			progressBar = new Gtk.ProgressBar ();
-			progressBar.Orientation = Gtk.ProgressBarOrientation.LeftToRight;
-			progressBar.BarStyle = ProgressBarStyle.Continuous;
-			progressBar.ActivityBlocks = 30;
+			progressBar = new ProgressBar ();
+			progressBar.Orientation = Orientation.Horizontal;
 			progressBar.Show ();
 			outerVBox.PackStart (progressBar, false, false, 0);
 
@@ -476,7 +475,7 @@ namespace Tomboy.Sync
 	}
 
 
-	public class SyncTitleConflictDialog : Gtk.Dialog
+	public class SyncTitleConflictDialog : CompatDialog
 	{
 		private Note existingNote;
 		private IList<string> noteUpdateTitles;
@@ -492,8 +491,8 @@ namespace Tomboy.Sync
 		private Gtk.Label headerLabel;
 		private Gtk.Label messageLabel;
 
-public SyncTitleConflictDialog (Note existingNote, IList<string> noteUpdateTitles) :
-		base (Catalog.GetString ("Note Conflict"), null, Gtk.DialogFlags.Modal)
+		public SyncTitleConflictDialog (Note existingNote, IList<string> noteUpdateTitles)
+		: base (null, DialogFlags.Modal, Catalog.GetString ("Note Conflict"))
 		{
 			this.existingNote = existingNote;
 			this.noteUpdateTitles = noteUpdateTitles;
@@ -509,7 +508,7 @@ public SyncTitleConflictDialog (Note existingNote, IList<string> noteUpdateTitle
 			outerVBox.Spacing = 8;
 
 			HBox hbox = new HBox (false, 8);
-			Image image = new Image (GuiUtils.GetIcon (Gtk.Stock.DialogWarning, 48)); // TODO: Is this the right icon?
+			Image image = new Image (GuiUtils.GetIcon (Stock.DialogWarning, 48)); // TODO: Is this the right icon?
 			image.Show ();
 			hbox.PackStart (image, false, false, 0);
 
@@ -534,29 +533,29 @@ public SyncTitleConflictDialog (Note existingNote, IList<string> noteUpdateTitle
 			hbox.PackStart (vbox, true, true, 0);
 
 			hbox.Show ();
-			outerVBox.PackStart (hbox);
-			VBox.PackStart (outerVBox);
+			outerVBox.PackStart (hbox, false, false, 0);
+			VBox.PackStart (outerVBox, false, false, 0);
 
-			Gtk.HBox renameHBox = new Gtk.HBox ();
-			renameRadio = new Gtk.RadioButton (Catalog.GetString ("Rename local note:"));
+			HBox renameHBox = new HBox ();
+			renameRadio = new RadioButton (Catalog.GetString ("Rename local note:"));
 			renameRadio.Toggled += radio_Toggled;
-			Gtk.VBox renameOptionsVBox = new Gtk.VBox ();
+			VBox renameOptionsVBox = new VBox ();
 
-			renameEntry = new Gtk.Entry (suggestedRename);
+			renameEntry = new Entry (suggestedRename);
 			renameEntry.Changed += renameEntry_Changed;
-			renameUpdateCheck = new Gtk.CheckButton (Catalog.GetString ("Update links in referencing notes"));
-			renameOptionsVBox.PackStart (renameEntry);
+			renameUpdateCheck = new CheckButton (Catalog.GetString ("Update links in referencing notes"));
+			renameOptionsVBox.PackStart (renameEntry, false, false, 0);
 			//renameOptionsVBox.PackStart (renameUpdateCheck); // This seems like a superfluous option
-			renameHBox.PackStart (renameRadio);
-			renameHBox.PackStart (renameOptionsVBox);
-			VBox.PackStart (renameHBox);
+			renameHBox.PackStart (renameRadio, false, false, 0);
+			renameHBox.PackStart (renameOptionsVBox, false, false, 0);
+			VBox.PackStart (renameHBox, false, false, 0);
 
 			deleteExistingRadio = new Gtk.RadioButton (renameRadio, Catalog.GetString ("Overwrite local note"));
 			deleteExistingRadio.Toggled += radio_Toggled;
-			VBox.PackStart (deleteExistingRadio);
+			VBox.PackStart (deleteExistingRadio, false, false, 0);
 
 			alwaysDoThisCheck = new Gtk.CheckButton (Catalog.GetString ("Always perform this action"));
-			VBox.PackStart (alwaysDoThisCheck);
+			VBox.PackStart (alwaysDoThisCheck, false, false, 0);
 
 			continueButton = (Gtk.Button) AddButton (Gtk.Stock.GoForward, Gtk.ResponseType.Accept);
 

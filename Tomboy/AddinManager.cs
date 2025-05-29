@@ -1,11 +1,6 @@
-
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Reflection;
 using System.IO;
-
-using Tomboy.Compat;
 
 using Tomboy.Sync;
 
@@ -47,7 +42,8 @@ namespace Tomboy
 
 		void InitializeMonoAddins (string old_conf_dir)
 		{
-			Logger.Info ("Initializing Mono.Addins");
+			Logger.Debug ("Initializing Mono.Addins, Tomboy configuration directory: {0}",
+			              tomboy_conf_dir);
 
 			// Perform migration if necessary
 			if (!String.IsNullOrEmpty (old_conf_dir)) {
@@ -242,6 +238,7 @@ namespace Tomboy
 		/// </summary>
 		public ApplicationAddin [] GetApplicationAddins ()
 		{
+			Logger.Debug ("Getting Addins");
 			ApplicationAddin [] app_addins;
 
 			try {

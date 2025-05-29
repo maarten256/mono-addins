@@ -38,7 +38,7 @@ namespace Tomboy
 		AlwaysRenameLinks = 2
 	}
 
-	public class NoteRenameDialog : Gtk.Dialog
+	public class NoteRenameDialog : CompatDialog
 	{
 		private IList<Note> notes;
 		private TreeStore notesModel;
@@ -47,10 +47,10 @@ namespace Tomboy
 		private RadioButton alwaysRenameRadio;
 
 		public NoteRenameDialog (IList<Note> notes, string oldTitle, Note renamedNote) :
-			base (Catalog.GetString ("Rename Note Links?"), renamedNote.Window, DialogFlags.NoSeparator)
+			base (renamedNote.Window, DialogFlags.Modal, Catalog.GetString ("Rename Note Links?"))
 		{
-			this.DefaultResponse = ResponseType.Cancel;
-			this.BorderWidth = 10;
+			DefaultResponse = ResponseType.Cancel;
+			BorderWidth = 10;
 
 			var renameButton = (Button)
 				AddButton (Catalog.GetString ("_Rename Links"),
@@ -60,7 +60,7 @@ namespace Tomboy
 				           ResponseType.No);
 
 			this.notes = notes;
-			notesModel = new Gtk.TreeStore (typeof (bool), typeof (string), typeof (Note));
+			notesModel = new TreeStore (typeof (bool), typeof (string), typeof (Note));
 			foreach (var note in notes)
 				notesModel.AppendValues (true, note.Title, note);
 
@@ -68,23 +68,29 @@ namespace Tomboy
 			                                   "to \"<span underline=\"single\">{1}</span>\"?\n\n" +
 			                                   "If you do not rename the links, " +
 			                                   "they will no longer link to anything.");
-			var label = new Label ();
-			label.UseMarkup = true;
-			label.Markup = String.Format (labelText,
-			                              GLib.Markup.EscapeText (oldTitle),
-			                              GLib.Markup.EscapeText (renamedNote.Title));
-			label.LineWrap = true;
-			VBox.PackStart (label, false, true, 5);
+            var label = new Label
+            {
+                UseMarkup = true,
+                Markup = String.Format(labelText,
+                                              GLib.Markup.EscapeText(oldTitle),
+                                              GLib.Markup.EscapeText(renamedNote.Title)),
+                LineWrap = true
+            };
+            VBox.PackStart (label, false, true, 5);
 
 			var notesView = new TreeView (notesModel);
 			notesView.SetSizeRequest (-1, 200);
-			var toggleCell = new CellRendererToggle ();
-			toggleCell.Activatable = true;
-			var column = new TreeViewColumn (Catalog.GetString ("Rename Links"),
-			                                 toggleCell, "active", 0);
-			column.SortColumnId = 0;
-			column.Resizable = true;
-			notesView.AppendColumn (column);
+            var toggleCell = new CellRendererToggle
+            {
+                Activatable = true
+            };
+            var column = new TreeViewColumn(Catalog.GetString("Rename Links"),
+                                             toggleCell, "active", 0)
+            {
+                SortColumnId = 0,
+                Resizable = true
+            };
+            notesView.AppendColumn (column);
 			toggleCell.Toggled += (o, args) => {
 				TreeIter iter;
 				if (!notesModel.GetIterFromString (out iter, args.Path))
@@ -92,17 +98,18 @@ namespace Tomboy
 				bool val = (bool) notesModel.GetValue (iter, 0);
 				notesModel.SetValue (iter, 0, !val);
 			};
-			column = new TreeViewColumn (Catalog.GetString ("Note Title"),
-			                             new CellRendererText (), "text", 1);
-			column.SortColumnId = 1;
-			column.Resizable = true;
-			notesView.AppendColumn (column);
+            column = new TreeViewColumn(Catalog.GetString("Note Title"),
+                                         new CellRendererText(), "text", 1)
+            {
+                SortColumnId = 1,
+                Resizable = true
+            };
+            notesView.AppendColumn (column);
 
 			notesView.RowActivated += (o, args) => {
-				TreeIter iter;
-				if (!notesModel.GetIter (out iter, args.Path))
-					return;
-				Note note = (Note) notesModel.GetValue (iter, 2);
+                if (!notesModel.GetIter(out TreeIter iter, args.Path))
+                    return;
+                Note note = (Note) notesModel.GetValue (iter, 2);
 				if (note != null) {
 					note.Window.Present ();
 					NoteFindBar find = note.Window.Find;
@@ -131,19 +138,23 @@ namespace Tomboy
 					return false;
 				});
 			};
-			var notesButtonBox = new HButtonBox ();
-			notesButtonBox.Add (selectNoneButton);
-			notesButtonBox.Add (selectAllButton);
+			var notesButtonBox = new HButtonBox
+            {
+                selectNoneButton,
+                selectAllButton
+            };
 			notesButtonBox.Spacing = 5;
 			notesButtonBox.LayoutStyle = ButtonBoxStyle.End;
-			var notesScroll = new ScrolledWindow ();
-			notesScroll.Add (notesView);
-			notesBox.PackStart (notesScroll);
+			var notesScroll = new ScrolledWindow
+            {
+                notesView
+            };
+			notesBox.PackStart (notesScroll, false, false, 0);
 			notesBox.PackStart (notesButtonBox, false, true, 0);
 
 			var advancedExpander = new Expander (Catalog.GetString ("Ad_vanced"));
 			var expandBox = new VBox ();
-			expandBox.PackStart (notesBox);
+			expandBox.PackStart (notesBox, false, false, 0);
 			alwaysShowDlgRadio = new RadioButton (Catalog.GetString ("Always show this _window"));
 			alwaysShowDlgRadio.Clicked += (o, e) => {
 				selectAllButton.Click ();
@@ -174,9 +185,9 @@ namespace Tomboy
 			VBox.PackStart (advancedExpander, true, true, 5);
 
 			advancedExpander.Activated += (o, e) =>
-				this.Resizable = advancedExpander.Expanded;
+				Resizable = advancedExpander.Expanded;
 
-			this.Focus = dontRenameButton;
+			Focus = dontRenameButton;
 			VBox.ShowAll ();
 		}
 

@@ -29,6 +29,7 @@ namespace Tomboy
 
 		public XKeybinder ()
 		{
+			Logger.Debug ("Constructing XKeybinder");
 			bindings = new List<Binding> ();
 			key_handler = new BindkeyHandler (KeybindingPressed);
 
@@ -37,9 +38,12 @@ namespace Tomboy
 
 		void KeybindingPressed (string keystring, IntPtr user_data)
 		{
-			foreach (Binding bind in bindings) {
-				if (bind.keystring == keystring) {
-					bind.handler (this, new EventArgs ());
+			Logger.Debug ("Keybinding pressed: {0}", keystring);
+			foreach (Binding bind in bindings)
+			{
+				if (bind.keystring == keystring)
+				{
+					bind.handler(this, new EventArgs());
 				}
 			}
 		}
@@ -47,6 +51,7 @@ namespace Tomboy
 		public void Bind (string       keystring,
 		                  EventHandler handler)
 		{
+			Logger.Debug ("In Bind: {0}", keystring);
 			Binding bind = new Binding ();
 			bind.keystring = keystring;
 			bind.handler = handler;
@@ -57,6 +62,7 @@ namespace Tomboy
 
 		public void Unbind (string keystring)
 		{
+			Logger.Debug ("In Unbind: {0}", keystring);
 			foreach (Binding bind in bindings) {
 				if (bind.keystring == keystring) {
 					tomboy_keybinder_unbind (bind.keystring,
@@ -70,6 +76,7 @@ namespace Tomboy
 
 		public virtual void UnbindAll ()
 		{
+			Logger.Debug ("In UnbindAll");
 			foreach (Binding bind in bindings) {
 				tomboy_keybinder_unbind (bind.keystring, key_handler);
 			}
@@ -77,7 +84,7 @@ namespace Tomboy
 			bindings.Clear ();
 		}
 
-	[DllImport("libtomboy")]
+		[DllImport("libtomboy")]
 		static extern bool egg_accelerator_parse_virtual (string keystring,
 			                out uint keysym,
 			                out uint virtual_mods);

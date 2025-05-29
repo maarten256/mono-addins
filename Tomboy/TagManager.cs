@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using Gtk;
@@ -51,15 +50,13 @@ namespace Tomboy
 		#endregion
 
 		#region Private Methods
-		static int CompareTagsSortFunc (TreeModel model, TreeIter a, TreeIter b)
+		static int CompareTagsSortFunc (ITreeModel model, TreeIter a, TreeIter b)
 		{
-			Tag tag_a = model.GetValue (a, 0) as Tag;
-			Tag tag_b = model.GetValue (b, 0) as Tag;
+            if (model.GetValue(a, 0) is not Tag tag_a ||
+				model.GetValue(b, 0) is not Tag tag_b)
+                return 0;
 
-			if (tag_a == null || tag_b == null)
-				return 0;
-
-			return string.Compare (tag_a.NormalizedName, tag_b.NormalizedName);
+            return string.Compare (tag_a.NormalizedName, tag_b.NormalizedName);
 		}
 		#endregion
 
@@ -213,7 +210,7 @@ namespace Tomboy
 		#endregion
 
 		#region Properties
-		public static Gtk.TreeModel Tags
+		public static ITreeModel Tags
 		{
 			get {
 				return sorted_tags;

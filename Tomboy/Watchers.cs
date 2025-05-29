@@ -1,8 +1,6 @@
-
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Tomboy.Compat;
 
@@ -572,7 +570,7 @@ namespace Tomboy
 		void OnInsertText (object sender, Gtk.InsertTextArgs args)
 		{
 			Gtk.TextIter start = args.Pos;
-			start.BackwardChars (args.Length);
+			start.BackwardChars (args.NewTextLength);
 
 			ApplyUrlToBlock (start, args.Pos);
 		}
@@ -587,7 +585,7 @@ namespace Tomboy
 			                                    (int) args.Event.Y,
 			                                    out x,
 			                                    out y);
-			Gtk.TextIter click_iter = Window.Editor.GetIterAtLocation (x, y);
+			_ = Window.Editor.GetIterAtLocation (out Gtk.TextIter click_iter, x, y);
 
 			// Move click_mark to click location
 			Buffer.MoveMark (click_mark, click_iter);
@@ -598,24 +596,30 @@ namespace Tomboy
 
 		void OnPopulatePopup (object sender, Gtk.PopulatePopupArgs args)
 		{
-			Gtk.TextIter click_iter = Buffer.GetIterAtMark (click_mark);
-			NoteTag url_tag = Note.TagTable.UrlTag;
-			if (click_iter.HasTag (url_tag) || click_iter.EndsTag (url_tag)) {
-				Gtk.MenuItem item;
+			if (args.Popup is Gtk.Menu popupMenu)
+			{
+				Gtk.TextIter click_iter = Buffer.GetIterAtMark(click_mark);
+				NoteTag url_tag = Note.TagTable.UrlTag;
+				if (click_iter.HasTag(url_tag) || click_iter.EndsTag(url_tag))
+				{
+					Gtk.MenuItem item;
 
-				item = new Gtk.SeparatorMenuItem ();
-				item.Show ();
-				args.Menu.Prepend (item);
+					item = new Gtk.SeparatorMenuItem();
+					item.Show();
+					popupMenu.Prepend(item);
 
-				item = new Gtk.MenuItem (Catalog.GetString ("_Copy Link Address"));
-				item.Activated += CopyLinkActivate;
-				item.Show ();
-				args.Menu.Prepend (item);
+					item = new Gtk.MenuItem(Catalog.GetString("_Copy Link Address"));
+					item.Activated += CopyLinkActivate;
+					item.Show();
+					popupMenu.Prepend(item);
 
-				item = new Gtk.MenuItem (Catalog.GetString ("_Open Link"));
-				item.Activated += OpenLinkActivate;
-				item.Show ();
-				args.Menu.Prepend (item);
+					item = new Gtk.MenuItem(Catalog.GetString("_Open Link"));
+					item.Activated += OpenLinkActivate;
+					item.Show();
+					popupMenu.Prepend(item);
+				}
+			} else {
+				Logger.Error("NoteUrlWatcher.OnPopulatePopup: args.Popup is not a Gtk.Menu, skipping.");
 			}
 		}
 
@@ -841,7 +845,7 @@ namespace Tomboy
 		void OnInsertText (object sender, Gtk.InsertTextArgs args)
 		{
 			Gtk.TextIter start = args.Pos;
-			start.BackwardChars (args.Length);
+			start.BackwardChars (args.NewTextLength);
 
 			Gtk.TextIter end = args.Pos;
 
@@ -981,7 +985,7 @@ namespace Tomboy
 		void OnInsertText (object sender, Gtk.InsertTextArgs args)
 		{
 			Gtk.TextIter start = args.Pos;
-			start.BackwardChars (args.Length);
+			start.BackwardChars (args.NewTextLength);
 
 			ApplyWikiwordToBlock (start, args.Pos);
 			
@@ -1087,7 +1091,7 @@ namespace Tomboy
 			                                    out buffer_x,
 			                                    out buffer_y);
 
-			Gtk.TextIter iter = Window.Editor.GetIterAtLocation (buffer_x, buffer_y);
+			_ = Window.Editor.GetIterAtLocation (out Gtk.TextIter iter, buffer_x, buffer_y);
 
 			foreach (Gtk.TextTag tag in iter.Tags) {
 				if (NoteTagTable.TagIsActivatable (tag)) {

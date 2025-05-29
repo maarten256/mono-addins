@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using Tomboy.Compat;
-using Tomboy;
 
 namespace Tomboy.Notebooks
 {
@@ -215,7 +213,7 @@ namespace Tomboy.Notebooks
 
 			NotebookNewNoteMenuItem item;
 
-			Gtk.TreeModel model = NotebookManager.Notebooks;
+			Gtk.ITreeModel model = NotebookManager.Notebooks;
 			Gtk.TreeIter iter;
 			
 			// Add in the "New Notebook..." menu item

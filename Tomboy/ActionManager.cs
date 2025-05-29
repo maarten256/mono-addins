@@ -186,8 +186,6 @@ namespace Tomboy
 			main_window_actions.GetAction ("DeleteNoteAction").Sensitive = false;
 
 			ui.InsertActionGroup (main_window_actions, 0);
-				
-			
 		}
 
 		public Gtk.Action FindActionByName (string action_name)

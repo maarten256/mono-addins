@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Tomboy.Compat;
-using Tomboy;
 
 namespace Tomboy.Notebooks
 {
@@ -16,8 +15,7 @@ namespace Tomboy.Notebooks
 		static Tag TemplateTag
 		{
 			get {
-				if (templateTag == null)
-					templateTag = TagManager.GetOrCreateSystemTag (TagManager.TemplateNoteSystemTag);
+				templateTag ??= TagManager.GetOrCreateSystemTag (TagManager.TemplateNoteSystemTag);
 				return templateTag;
 			}
 		}
@@ -25,8 +23,7 @@ namespace Tomboy.Notebooks
 		static Gdk.Pixbuf NotebookIcon
 		{
 			get {
-				if (notebookIcon == null)
-					notebookIcon = GuiUtils.GetIcon ("notebook", 22);
+				notebookIcon ??= GuiUtils.GetIcon ("notebook", 22);
 				return notebookIcon;
 			}
 		}
@@ -34,8 +31,7 @@ namespace Tomboy.Notebooks
 		static Gdk.Pixbuf NewNotebookIcon
 		{
 			get {
-				if (newNotebookIcon == null)
-					newNotebookIcon = GuiUtils.GetIcon ("notebook-new", 16);
+				newNotebookIcon ??= GuiUtils.GetIcon ("notebook-new", 16);
 				return newNotebookIcon;
 			}
 		}
@@ -46,14 +42,18 @@ namespace Tomboy.Notebooks
 
 		private void InitializeToolButton ()
 		{
-			toolButton =
-					new ToolMenuButton (Note.Window.Toolbar,
-										new Gtk.Image (NotebookIcon),
-										string.Empty, menu);
-			toolButton.IsImportant = true;
-			toolButton.Homogeneous = false;
-			Gtk.Tooltips toolbarTips = new Gtk.Tooltips ();
-			toolbarTips.SetTip (toolButton, Catalog.GetString ("Place this note into a notebook"), null);
+            toolButton =
+                    new ToolMenuButton(Note.Window.Toolbar,
+                                        new Gtk.Image(NotebookIcon),
+                                        string.Empty, menu)
+                    {
+                        IsImportant = true,
+                        Homogeneous = false
+                    };
+			toolButton.TooltipText = Catalog.GetString ("Place this note into a notebook");
+			toolButton.HasTooltip = true;
+//            Gtk.Tooltips toolbarTips = new Gtk.Tooltips ();
+//			toolbarTips.SetTip (toolButton, Catalog.GetString ("Place this note into a notebook"), null);
 			
 			// Set the notebook submenu
 			menu.Shown += OnMenuShown;
@@ -201,20 +201,21 @@ namespace Tomboy.Notebooks
 		
 		List<NotebookMenuItem> GetNotebookMenuItems ()
 		{
-			List<NotebookMenuItem> items = new List<NotebookMenuItem> ();
+			List<NotebookMenuItem> items = [];
 			
-			Gtk.TreeModel model = NotebookManager.Notebooks;
-			Gtk.TreeIter iter;
-			
-			if (model.GetIterFirst (out iter) == true) {
-				do {
-					Notebook notebook = model.GetValue (iter, 0) as Notebook;
-					NotebookMenuItem item = new NotebookMenuItem (Note, notebook);
-					items.Add (item);
-				} while (model.IterNext (ref iter) == true);
-			}
-			
-			items.Sort ();
+			Gtk.ITreeModel model = NotebookManager.Notebooks;
+
+            if (model.GetIterFirst(out Gtk.TreeIter iter) == true)
+            {
+                do
+                {
+                    Notebook notebook = model.GetValue(iter, 0) as Notebook;
+                    NotebookMenuItem item = new(Note, notebook);
+                    items.Add(item);
+                } while (model.IterNext(ref iter) == true);
+            }
+
+            items.Sort ();
 			
 			return items;
 		}

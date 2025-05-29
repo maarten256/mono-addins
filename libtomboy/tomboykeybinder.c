@@ -29,6 +29,10 @@
 #include "eggaccelerators.h"
 #include "tomboykeybinder.h"
 
+#ifndef GDK_WINDOW_XWINDOW
+#define GDK_WINDOW_XWINDOW(win) (gdk_x11_window_get_xid(win))
+#endif
+
 /* Uncomment the next line to print a debug trace. */
 /* #define DEBUG */
 
@@ -42,8 +46,8 @@ typedef struct _Binding {
 	TomboyBindkeyHandler  handler;
 	gpointer              user_data;
 	char                 *keystring;
-	uint                  keycode;
-	uint                  modifiers;
+	guint                  keycode;
+	guint                  modifiers;
 } Binding;
 
 static GSList *bindings = NULL;

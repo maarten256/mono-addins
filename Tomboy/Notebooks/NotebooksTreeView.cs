@@ -1,6 +1,6 @@
 using System;
 //using Tomboy.Compat; // TODO: Add this file to the POTFILES.in if Catalog.GetString is used here
-using Tomboy;
+using Gtk;
 
 namespace Tomboy.Notebooks
 {
@@ -8,23 +8,23 @@ namespace Tomboy.Notebooks
 	{
 		NoteManager noteManager;
 		
-		public NotebooksTreeView(Gtk.TreeModel model) : base (model)
+		public NotebooksTreeView(ITreeModel model) : base (model)
 		{
 			noteManager = Tomboy.DefaultNoteManager;
 			
 			// Set up the notebooksTree as a drag target so that notes
 			// can be dragged into the notebook.
-			Gtk.TargetEntry [] targets =
-				new Gtk.TargetEntry [] {
-					new Gtk.TargetEntry ("text/uri-list",
-					Gtk.TargetFlags.App,
+			TargetEntry [] targets =
+				[
+					new TargetEntry ("text/uri-list",
+					TargetFlags.App,
 					1)
-				};
+				];
 
-			Gtk.Drag.DestSet (this,
-							  Gtk.DestDefaults.All,
-							  targets,
-							  Gdk.DragAction.Move);
+			Drag.DestSet (this,
+						  DestDefaults.All,
+						  targets,
+						  Gdk.DragAction.Move);
 		}
 		
 		protected override void OnDragDataReceived (Gdk.DragContext context,

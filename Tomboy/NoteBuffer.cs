@@ -202,11 +202,11 @@ namespace Tomboy
 
 		public void OnTagApplied (object o, Gtk.TagAppliedArgs args)
 		{
-			if (!(args.Tag is DepthNoteTag)) {
+			if (args.Tag is not DepthNoteTag) {
 				// Remove the tag from any bullets in the selection
 				Undoer.FreezeUndo ();
 				Gtk.TextIter iter;
-				for (int i = args.StartChar.Line; i <= args.EndChar.Line; i++) {
+				for (int i = args.Start.Line; i <= args.End.Line; i++) {
 					iter = GetIterAtLine(i);
 
 					if (FindDepthTag (iter) != null) {
@@ -219,9 +219,9 @@ namespace Tomboy
 			} else {
 				// Remove any existing tags when a depth tag is applied
 				Undoer.FreezeUndo ();
-				foreach (Gtk.TextTag tag in args.StartChar.Tags) {
-					if (!(tag is DepthNoteTag)) {
-						RemoveTag (tag, args.StartChar, args.EndChar);
+				foreach (Gtk.TextTag tag in args.Start.Tags) {
+					if (tag is not DepthNoteTag) {
+						RemoveTag (tag, args.Start, args.End);
 					}
 				}
 				Undoer.ThawUndo ();
@@ -276,9 +276,9 @@ namespace Tomboy
 		void TextInsertedEvent (object sender, Gtk.InsertTextArgs args)
 		{
 			// Only apply active tags when typing, not on paste.
-			if (args.Text.Length == 1) {
+			if (args.NewText.Length == 1) {
 				Gtk.TextIter insert_start = args.Pos;
-				insert_start.BackwardChars (args.Text.Length);
+				insert_start.BackwardChars (args.NewText.Length);
 
 				Undoer.FreezeUndo ();
 				foreach (Gtk.TextTag tag in insert_start.Tags) {
@@ -295,19 +295,18 @@ namespace Tomboy
 			Gtk.TextIter line_start = args.Pos;
 			line_start.LineOffset = 0;
 
-			if (args.Pos.LineOffset - args.Text.Length == 2 &&
+			if (args.Pos.LineOffset - args.NewText.Length == 2 &&
 			                FindDepthTag (line_start) != null) {
 				Pango.Direction direction = Pango.Direction.Ltr;
 
-				if (args.Text.Length > 0)
-					direction = Pango.Global.UnicharDirection (args.Text[0]);
+				if (args.NewText.Length > 0)
+					direction = Pango.Global.UnicharDirection (args.NewText[0]);
 
 				ChangeBulletDirection (args.Pos, direction);
 			}
 
-			if (InsertTextWithTags != null)
-				InsertTextWithTags (sender, args);
-		}
+            InsertTextWithTags?.Invoke(sender, args);
+        }
 
 		// Change the direction of a bulleted line to match the new
 		// first character after the previous character is deleted.
@@ -1259,7 +1258,7 @@ namespace Tomboy
 				}
 			}
 
-			while (!iter.Equal (end) && iter.Char != null) {
+			while (!iter.Equals (end) && iter.Char != null) {
 				DepthNoteTag depth_tag = ((NoteBuffer)buffer).FindDepthTag (iter);
 
 				// If we are at a character with a depth tag we are at the

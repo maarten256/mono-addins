@@ -1,4 +1,3 @@
-
 using System;
 
 namespace Tomboy
@@ -11,7 +10,7 @@ namespace Tomboy
 		        DESKTOP_GNOME_INTERFACE_PATH + "/document_font_name";
 
 		public NoteEditor (Gtk.TextBuffer buffer)
-: base (buffer)
+		: base (buffer)
 		{
 			WrapMode = Gtk.WrapMode.Word;
 			LeftMargin = DefaultMargin;
@@ -150,7 +149,7 @@ namespace Tomboy
 		{
 			bool has_url = false;
 
-			foreach (Gdk.Atom target in context.Targets) {
+			foreach (Gdk.Atom target in context.ListTargets()) {
 				if (target.Name == "text/uri-list" ||
 				                target.Name == "_NETSCAPE_URL") {
 					has_url = true;
@@ -167,7 +166,7 @@ namespace Tomboy
 				Gdk.Rectangle rect = VisibleRect;
 				int adjustedX = x + rect.X;
 				int adjustedY = y + rect.Y;
-				Gtk.TextIter cursor = GetIterAtLocation (adjustedX, adjustedY);
+				_ = GetIterAtLocation (out Gtk.TextIter cursor, adjustedX, adjustedY);
 				Buffer.PlaceCursor (cursor);
 
 				Gtk.TextTag link_tag = Buffer.TagTable.Lookup ("link:url");

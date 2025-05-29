@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,6 +6,7 @@ using System.Xml;
 using Tomboy.Sync;
 using Tomboy.Compat;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace Tomboy
 {
@@ -23,6 +23,9 @@ namespace Tomboy
 		static SyncDialog sync_dlg;
 		static RemoteControl remote_control;
 		static Gtk.IconTheme icon_theme = null;
+
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		private delegate bool ActivateLinkDelegate(IntPtr aboutDialog, IntPtr uri);
 
 		[STAThread]
 		public static async Task Main (string [] args)
@@ -99,14 +102,17 @@ namespace Tomboy
 				}
 			}
 
+			Logger.Debug ("Creating NoteManager...");
 			// Create the default note manager instance.
 			string note_path = GetNotePath (cmd_line.NotePath);
 			manager = new NoteManager (note_path);
 			manager.CommandLine = cmd_line;
 
+			Logger.Debug ("Calling SetupGlobalActions...");
 			SetupGlobalActions ();
 			ActionManager am = Tomboy.ActionManager;
 
+			Logger.Debug ("Global actions set up. Setting timer...");
 			// TODO: Instead of just delaying, lazy-load
 			//       (only an issue for add-ins that need to be
 			//       available at Tomboy startup, and restoring
@@ -123,9 +129,12 @@ namespace Tomboy
 
 				// Register the manager to handle remote requests.
 				_ = RegisterRemoteControl (manager);
-				if (cmd_line.NeedsExecute) {
+				Logger.Debug ("Remote control registered.");
+				Logger.Debug ("cmd_line.NeedsExecute: {0}", cmd_line.NeedsExecute);
+				if (cmd_line.NeedsExecute)
+				{
 					// Execute args on this instance
-					cmd_line.Execute ();
+					cmd_line.Execute();
 				}
 #if WIN32
 				if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
@@ -172,6 +181,23 @@ namespace Tomboy
 			Logger.Debug ("All done.  Ciao!");
 		}
 
+		private static bool OnActivateLink(IntPtr aboutDialog, IntPtr uriPtr)
+		{
+			string uri = GLib.Marshaller.Utf8PtrToString(uriPtr);
+
+			try
+			{
+				Services.NativeApplication.OpenUrl(uri, null);
+			}
+			catch (Exception e)
+			{
+				GuiUtils.ShowOpeningLocationError(new Gtk.AboutDialog(aboutDialog), uri, e.Message);
+			}
+
+			// Returning true: we handled the link
+			return true;
+		}
+
 		public static bool Debugging
 		{
 			get { return debugging; }
@@ -207,6 +233,7 @@ namespace Tomboy
 
 		static void StartTrayIcon ()
 		{
+			Logger.Debug ("Starting Tray Icon...");
 			// Create the tray icon and run the main loop
 			tray_icon = new TomboyTrayIcon (manager);
 			tray = tray_icon.Tray;
@@ -446,22 +473,33 @@ namespace Tomboy
 			                                    "note-taking application.");
 			about.WindowPosition = Gtk.WindowPosition.Center;
 
-			Gtk.AboutDialog.SetUrlHook (delegate (Gtk.AboutDialog dialog, string link) {
-				try {
-					Services.NativeApplication.OpenUrl (link, null);
-				} catch (Exception e) {
-					GuiUtils.ShowOpeningLocationError (dialog, link, e.Message);
-				}
-			}); 
+			// Gtk.AboutDialog.SetUrlHook (delegate (Gtk.AboutDialog dialog, string link) {
+			// 	try {
+			// 		Services.NativeApplication.OpenUrl (link, null);
+			// 	} catch (Exception e) {
+			// 		GuiUtils.ShowOpeningLocationError (dialog, link, e.Message);
+			// 	}
+			// }); 
 			about.Website = Defines.TOMBOY_WEBSITE;
 			about.WebsiteLabel = Catalog.GetString("Homepage");
 			about.Authors = authors;
 			about.Documenters = documenters;
 			about.TranslatorCredits = translators;
 			about.IconName = "tomboy";
+
+			GObjectInterop.g_signal_connect_data(
+				about.Handle,
+				"activate-link",
+				new ActivateLinkDelegate(OnActivateLink),
+				IntPtr.Zero,
+				IntPtr.Zero,
+				GObjectInterop.GConnectFlags.None
+			);
+
 			about.Response += delegate {
 				about.Destroy ();
 			};
+
 			about.Present ();
 		}
 

@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,6 +10,7 @@ using System.Xml;
 
 using Tomboy.Compat;
 using System.Threading.Tasks;
+using DBus.Protocol;
 
 namespace Tomboy
 {
@@ -57,7 +57,7 @@ namespace Tomboy
 
 			// Unhighlight the parent
 			if (menu.AttachWidget != null)
-				menu.AttachWidget.State = Gtk.StateType.Normal;
+				menu.AttachWidget.SetStateFlags( Gtk.StateFlags.Normal, true );
 		}
 
 		// Place the menu underneath an arbitrary parent widget.  The
@@ -91,7 +91,7 @@ namespace Tomboy
 
 			// Highlight the parent
 			if (menu.AttachWidget != null)
-				menu.AttachWidget.State = Gtk.StateType.Selected;
+				menu.AttachWidget.SetStateFlags (Gtk.StateFlags.Selected, true);
 
 #if WIN32
 			BringToForeground ();
@@ -469,7 +469,7 @@ namespace Tomboy
 		}
 	}
 
-	public class HIGMessageDialog : Gtk.Dialog
+	public class HIGMessageDialog : CompatDialog
 	{
 		Gtk.AccelGroup accel_group;
 		Gtk.VBox extra_widget_vbox;
@@ -482,9 +482,8 @@ namespace Tomboy
 								 Gtk.ButtonsType buttons,
 								 string header,
 								 string msg)
-: base()
+		: base(parent, flags)
 		{
-			HasSeparator = false;
 			BorderWidth = 5;
 			Resizable = false;
 			Title = "";
@@ -545,7 +544,8 @@ namespace Tomboy
 			label.UseUnderline = false;
 			label.Justify = Gtk.Justification.Left;
 			label.LineWrap = true;
-			label.SetAlignment(0.0f, 0.5f);
+			label.Xalign = 0.0f;
+			label.Yalign = 0.5f;
 			label.Show();
 			label_vbox.PackStart(label, false, false, 0);
 
@@ -554,7 +554,8 @@ namespace Tomboy
 			label.UseUnderline = false;
 			label.Justify = Gtk.Justification.Left;
 			label.LineWrap = true;
-			label.SetAlignment(0.0f, 0.5f);
+			label.Xalign = 0.0f;
+			label.Yalign = 0.5f;
 			label.Show();
 			label_vbox.PackStart(label, false, false, 0);
 
@@ -954,7 +955,7 @@ namespace Tomboy
 		{
 			Gtk.TextIter iter = buffer.GetIterAtMark(mark);
 
-			if (iter.Equal(buffer.EndIter))
+			if (iter.Equals(buffer.EndIter))
 			{
 				range.Destroy();
 				buffer.DeleteMark(mark);
@@ -1176,6 +1177,7 @@ namespace Tomboy
 
 		public static void StartMainLoop()
 		{
+			Logger.Debug ("Starting main loop");
 			native_app.StartMainLoop();
 		}
 

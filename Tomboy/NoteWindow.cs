@@ -11,18 +11,18 @@ namespace Tomboy
 	{
 		Note note;
 
-		Gtk.AccelGroup accel_group;
-		Gtk.Toolbar toolbar;
-		Gtk.Tooltips toolbar_tips;
-		Gtk.ToolButton link_button;
+		AccelGroup accel_group;
+		Toolbar toolbar;
+//		Gtk.Tooltips toolbar_tips;
+		ToolButton link_button;
 		NoteTextMenu text_menu;
-		Gtk.Menu plugin_menu;
-		Gtk.ImageMenuItem sync_menu_item;
-		Gtk.TextView editor;
-		Gtk.ScrolledWindow editor_window;
+		Menu plugin_menu;
+		MenuItem sync_menu_item;
+		TextView editor;
+		ScrolledWindow editor_window;
 		NoteFindBar find_bar;
-		Gtk.ToolButton delete;
-		Gtk.Box template_widget;
+		ToolButton delete;
+		Box template_widget;
 
 		GlobalKeybinder global_keys;
 		InterruptableTimeout mark_set_timeout;
@@ -336,90 +336,93 @@ namespace Tomboy
 		[GLib.ConnectBefore]
 		void OnPopulatePopup (object sender, Gtk.PopulatePopupArgs args)
 		{
-			args.Menu.AccelGroup = accel_group;
+			if (args.Popup is Menu menu)
+			{
 
-			Logger.Debug ("Populating context menu...");
+				menu.AccelGroup = accel_group;
 
-			// Remove the lame-o gigantic Insert Unicode Control
-			// Characters menu item.
-			Gtk.Widget lame_unicode;
-			lame_unicode = (Gtk.Widget)
-			               args.Menu.Children [args.Menu.Children.Length - 1];
-			args.Menu.Remove (lame_unicode);
+				Logger.Debug("Populating context menu...");
 
-			Gtk.MenuItem spacer1 = new Gtk.SeparatorMenuItem ();
-			spacer1.Show ();
+				// Remove the lame-o gigantic Insert Unicode Control
+				// Characters menu item.
+				Widget lame_unicode;
+				lame_unicode = (Widget)
+							   menu.Children[menu.Children.Length - 1];
+				menu.Remove(lame_unicode);
 
-			Gtk.ImageMenuItem search = new Gtk.ImageMenuItem (
-			        Catalog.GetString ("_Search All Notes"));
-			search.Image = new Gtk.Image (Gtk.Stock.Find, Gtk.IconSize.Menu);
-			search.Activated += SearchActivate;
-			search.AddAccelerator ("activate",
-			                       accel_group,
-			                       (uint) Gdk.Key.f,
-			                       (Gdk.ModifierType.ControlMask |
-			                        Gdk.ModifierType.ShiftMask),
-			                       Gtk.AccelFlags.Visible);
-			search.Show ();
+				MenuItem spacer1 = new SeparatorMenuItem();
+				spacer1.Show();
 
-			Gtk.ImageMenuItem link =
-			        new Gtk.ImageMenuItem (Catalog.GetString ("_Link to New Note"));
-			link.Image = new Gtk.Image (Gtk.Stock.JumpTo, Gtk.IconSize.Menu);
-			link.Sensitive = (note.Buffer.Selection != null);
-			link.Activated += LinkToNoteActivate;
-			link.AddAccelerator ("activate",
-			                     accel_group,
-			                     (uint) Gdk.Key.l,
-			                     Gdk.ModifierType.ControlMask,
-			                     Gtk.AccelFlags.Visible);
-			link.Show ();
+				ImageMenuItem search = new(Catalog.GetString("_Search All Notes"));
+				search.Image = new Image(Stock.Find, IconSize.Menu);
+				search.Activated += SearchActivate;
+				search.AddAccelerator("activate",
+									   accel_group,
+									   (uint)Gdk.Key.f,
+									   (Gdk.ModifierType.ControlMask |
+										Gdk.ModifierType.ShiftMask),
+									   AccelFlags.Visible);
+				search.Show();
 
-			Gtk.ImageMenuItem text_item =
-			        new Gtk.ImageMenuItem (Catalog.GetString ("Te_xt"));
-			text_item.Image = new Gtk.Image (Gtk.Stock.SelectFont, Gtk.IconSize.Menu);
-			text_item.Submenu = new NoteTextMenu (accel_group,
-			                                      note.Buffer,
-			                                      note.Buffer.Undoer);
-			text_item.Show ();
+				ImageMenuItem link =
+						new(Catalog.GetString("_Link to New Note"));
+				link.Image = new Image(Stock.JumpTo, IconSize.Menu);
+				link.Sensitive = note.Buffer.Selection != null;
+				link.Activated += LinkToNoteActivate;
+				link.AddAccelerator("activate",
+									 accel_group,
+									 (uint)Gdk.Key.l,
+									 Gdk.ModifierType.ControlMask,
+									 AccelFlags.Visible);
+				link.Show();
 
-			Gtk.ImageMenuItem find_item =
-			        new Gtk.ImageMenuItem (Catalog.GetString ("_Find in This Note"));
-			find_item.Image = new Gtk.Image (Gtk.Stock.Find, Gtk.IconSize.Menu);
-			find_item.Submenu = MakeFindMenu ();
-			find_item.Show ();
+				ImageMenuItem text_item = new(Catalog.GetString("Te_xt"));
+				text_item.Image = new Image(Stock.SelectFont, IconSize.Menu);
+				text_item.Submenu = new NoteTextMenu(accel_group,
+													 note.Buffer,
+													 note.Buffer.Undoer);
+				text_item.Show();
 
-			Gtk.MenuItem spacer2 = new Gtk.SeparatorMenuItem ();
-			spacer2.Show ();
+				ImageMenuItem find_item = new(Catalog.GetString("_Find in This Note"));
+				find_item.Image = new Image(Stock.Find, IconSize.Menu);
+				find_item.Submenu = MakeFindMenu();
+				find_item.Show();
 
-			args.Menu.Prepend (spacer1);
-			args.Menu.Prepend (text_item);
-			args.Menu.Prepend (find_item);
-			args.Menu.Prepend (link);
-			args.Menu.Prepend (search);
+				MenuItem spacer2 = new SeparatorMenuItem();
+				spacer2.Show();
 
-			Gtk.MenuItem close_all =
-			        new Gtk.MenuItem (Catalog.GetString ("Clos_e All Notes"));
-			close_all.Activated += CloseAllWindowsHandler;
-			close_all.AddAccelerator ("activate",
-			                          accel_group,
-			                          (uint) Gdk.Key.q,
-			                          Gdk.ModifierType.ControlMask,
-			                          Gtk.AccelFlags.Visible);
-			close_all.Show ();
+				menu.Prepend(spacer1);
+				menu.Prepend(text_item);
+				menu.Prepend(find_item);
+				menu.Prepend(link);
+				menu.Prepend(search);
 
-			Gtk.ImageMenuItem close_window =
-			        new Gtk.ImageMenuItem (Catalog.GetString ("_Close"));
-			close_window.Image = new Gtk.Image (Gtk.Stock.Close, Gtk.IconSize.Menu);
-			close_window.Activated += CloseWindowHandler;
-			close_window.AddAccelerator ("activate",
-			                             accel_group,
-			                             (uint) Gdk.Key.w,
-			                             Gdk.ModifierType.ControlMask,
-			                             Gtk.AccelFlags.Visible);
-			close_window.Show ();
+				MenuItem close_all = new(Catalog.GetString("Clos_e All Notes"));
+				close_all.Activated += CloseAllWindowsHandler;
+				close_all.AddAccelerator("activate",
+										  accel_group,
+										  (uint)Gdk.Key.q,
+										  Gdk.ModifierType.ControlMask,
+										  AccelFlags.Visible);
+				close_all.Show();
 
-			args.Menu.Append (close_all);
-			args.Menu.Append (close_window);
+				ImageMenuItem close_window = new(Catalog.GetString("_Close"));
+				close_window.Image = new Image(Stock.Close, IconSize.Menu);
+				close_window.Activated += CloseWindowHandler;
+				close_window.AddAccelerator("activate",
+											 accel_group,
+											 (uint)Gdk.Key.w,
+											 Gdk.ModifierType.ControlMask,
+											 AccelFlags.Visible);
+				close_window.Show();
+
+				menu.Append(close_all);
+				menu.Append(close_window);
+			}
+			else
+			{
+				Logger.Error("Context menu is not a Gtk.Menu, skipping population.");
+			}
 		}
 
 		//
@@ -429,20 +432,24 @@ namespace Tomboy
 		// toolbar.
 		//
 
-		Gtk.Toolbar MakeToolbar ()
+		Toolbar MakeToolbar ()
 		{
-			Gtk.Toolbar tb = new Gtk.Toolbar ();
-			tb.Tooltips = true;
+			Toolbar tb = [];
+            // tb.Tooltips = true;
 
-			toolbar_tips = new Gtk.Tooltips ();
+            // toolbar_tips = new Gtk.Tooltips ();
 
-			Gtk.ToolButton search = new Gtk.ToolButton (
-				new Gtk.Image (Gtk.Stock.Find, tb.IconSize),
-				Catalog.GetString ("Search"));
-			search.IsImportant = true;
-			search.Clicked += SearchActivate;
+            ToolButton search = new(
+                new Image(Stock.Find, tb.IconSize),
+                Catalog.GetString("Search"))
+            {
+                IsImportant = true
+            };
+            search.Clicked += SearchActivate;
+			search.HasTooltip = true;
+			search.TooltipText = Catalog.GetString ("Search your notes") + " (Ctrl-Shift-F)";
 			// TODO: If we ever add a way to customize internal keybindings, this will need to change
-			toolbar_tips.SetTip (search, Catalog.GetString ("Search your notes") + " (Ctrl-Shift-F)", null);
+			// toolbar_tips.SetTip (search, Catalog.GetString ("Search your notes") + " (Ctrl-Shift-F)", null);
 			search.AddAccelerator ("clicked",
 			                       accel_group,
 			                       (uint) Gdk.Key.f,
@@ -452,17 +459,22 @@ namespace Tomboy
 			search.ShowAll ();
 			tb.Insert (search, -1);
 
-			link_button = new Gtk.ToolButton (
-				new Gtk.Image (Gtk.Stock.JumpTo, tb.IconSize),
-				Catalog.GetString ("Link"));
-			link_button.IsImportant = true;
-			link_button.Sensitive = (note.Buffer.Selection != null);
-			link_button.Clicked += LinkToNoteActivate;
+            link_button = new ToolButton(
+							new Image(Stock.JumpTo, tb.IconSize),
+							Catalog.GetString("Link"))
+							{
+								IsImportant = true,
+								Sensitive = (note.Buffer.Selection != null)
+							};
+            link_button.Clicked += LinkToNoteActivate;
+			link_button.HasTooltip = true;
+			link_button.TooltipText =
+				Catalog.GetString ("Link selected text to a new note") + " (Ctrl-L)";
 			// TODO: If we ever add a way to customize internal keybindings, this will need to change
-			toolbar_tips.SetTip (
-				link_button,
-				Catalog.GetString ("Link selected text to a new note") + " (Ctrl-L)",
-				null);
+			// toolbar_tips.SetTip (
+			// 	link_button,
+			// 	Catalog.GetString ("Link selected text to a new note") + " (Ctrl-L)",
+			// 	null);
 			link_button.AddAccelerator ("clicked",
 			                            accel_group,
 			                            (uint) Gdk.Key.l,
@@ -471,32 +483,40 @@ namespace Tomboy
 			link_button.ShowAll ();
 			tb.Insert (link_button, -1);
 
-			ToolMenuButton text_button =
-			        new ToolMenuButton (tb,
-			                            Gtk.Stock.SelectFont,
-			                            Catalog.GetString ("_Text"),
-			                            text_menu);
-			text_button.IsImportant = true;
-			text_button.ShowAll ();
+            ToolMenuButton text_button = new(tb,
+											Stock.SelectFont,
+											Catalog.GetString("_Text"),
+											text_menu)
+											{
+												IsImportant = true
+											};
+            text_button.ShowAll ();
+			text_button.HasTooltip = true;
+			text_button.TooltipText = Catalog.GetString("Set properties of text");
 			tb.Insert (text_button, -1);
-			toolbar_tips.SetTip (text_button, Catalog.GetString ("Set properties of text"), null);
+			// toolbar_tips.SetTip (text_button, Catalog.GetString ("Set properties of text"), null);
 
-			ToolMenuButton plugin_button =
-			        new ToolMenuButton (tb,
-			                            Gtk.Stock.Execute,
-			                            Catalog.GetString ("T_ools"),
-			                            plugin_menu);
+			ToolMenuButton plugin_button = new(tb,
+											Stock.Execute,
+											Catalog.GetString ("T_ools"),
+											plugin_menu);
 			plugin_button.ShowAll ();
+			plugin_button.HasTooltip = true;
+			plugin_button.TooltipText = Catalog.GetString ("Use tools on this note");
 			tb.Insert (plugin_button, -1);
-			toolbar_tips.SetTip (plugin_button, Catalog.GetString ("Use tools on this note"), null);
+			// toolbar_tips.SetTip (plugin_button, Catalog.GetString ("Use tools on this note"), null);
 
 			tb.Insert (new Gtk.SeparatorToolItem (), -1);
 
-			delete = new Gtk.ToolButton (Gtk.Stock.Delete);
+			delete = new ToolButton (new Image(Stock.Delete, tb.IconSize),
+			                         Catalog.GetString ("Delete"));
+
 			delete.Clicked += OnDeleteButtonClicked;
+			delete.HasTooltip = true;
+			delete.TooltipText = Catalog.GetString ("Delete this note");
 			delete.ShowAll ();
 			tb.Insert (delete, -1);
-			toolbar_tips.SetTip (delete, Catalog.GetString ("Delete this note"), null);
+			// toolbar_tips.SetTip (delete, Catalog.GetString ("Delete this note"), null);
 
 			// Don't allow deleting the "Start Here" note...
 			if (note.IsSpecial)
@@ -504,8 +524,12 @@ namespace Tomboy
 
 			tb.Insert (new Gtk.SeparatorToolItem (), -1);
 
-			sync_menu_item = new Gtk.ImageMenuItem (Catalog.GetString ("Synchronize Notes"));
-			sync_menu_item.Image = new Gtk.Image (Gtk.Stock.Convert, Gtk.IconSize.Menu);
+			Box sync_menu_item_box = new(Orientation.Horizontal, 0);
+			sync_menu_item_box.PackStart (new Image (Stock.Convert, IconSize.Menu), false, false, 0);
+			sync_menu_item_box.PackStart (new Label (Catalog.GetString ("Synchronize Notes")), false, false, 0);
+
+			sync_menu_item = [];
+			sync_menu_item.Add (sync_menu_item_box);
 			sync_menu_item.Activated += SyncItemSelected;
 			sync_menu_item.Show ();
 			PluginMenu.Add (sync_menu_item);
@@ -552,7 +576,7 @@ namespace Tomboy
 			return menu;
 		}
 
-		private Gtk.Box MakeTemplateBar ()
+        private VBox MakeTemplateBar()
 		{
 			// TODO: Move these to static area
 			Tag template_tag = TagManager.GetOrCreateSystemTag (TagManager.TemplateNoteSystemTag);
@@ -560,51 +584,61 @@ namespace Tomboy
 			Tag template_save_selection_tag = TagManager.GetOrCreateSystemTag (TagManager.TemplateNoteSaveSelectionSystemTag);
 			Tag template_save_title_tag = TagManager.GetOrCreateSystemTag (TagManager.TemplateNoteSaveTitleSystemTag);
 
-			var bar = new Gtk.VBox ();
+			var bar = new VBox ();
 
-			var infoLabel  = new Gtk.Label (Catalog.GetString ("This note is a template note. It determines " +
-			                                                   "the default content of regular notes, and will " +
-			                                                   "not show up in the note menu or search window."));
-			infoLabel.Wrap = true;
+            var infoLabel = new Label(Catalog.GetString("This note is a template note. It determines " +
+                                                           "the default content of regular notes, and will " +
+                                                           "not show up in the note menu or search window."))
+            {
+                Wrap = true
+            };
 
-			var untemplateButton = new Gtk.Button ();
-			untemplateButton.Label = Catalog.GetString ("Convert to regular note");
-			untemplateButton.Clicked += (o, e) => {
+            var untemplateButton = new Button
+            {
+                Label = Catalog.GetString("Convert to regular note")
+            };
+            untemplateButton.Clicked += (o, e) => {
 				note.RemoveTag (template_tag);
 			};
 
-			var saveSizeCheckbutton = new Gtk.CheckButton (Catalog.GetString ("Save Si_ze"));
-			saveSizeCheckbutton.Active = note.ContainsTag (template_save_size_tag);
-			saveSizeCheckbutton.Toggled += (o, e) => {
+            var saveSizeCheckbutton = new CheckButton(Catalog.GetString("Save Si_ze"))
+            {
+                Active = note.ContainsTag(template_save_size_tag)
+            };
+            saveSizeCheckbutton.Toggled += (o, e) => {
 				if (saveSizeCheckbutton.Active)
 					note.AddTag (template_save_size_tag);
 				else
 					note.RemoveTag (template_save_size_tag);
 			};
 
-			var saveSelectionCheckbutton = new Gtk.CheckButton (Catalog.GetString ("Save Se_lection"));
-			saveSelectionCheckbutton.Active = note.ContainsTag (template_save_selection_tag);
-			saveSelectionCheckbutton.Toggled += (o, e) => {
+            var saveSelectionCheckbutton = new CheckButton(Catalog.GetString("Save Se_lection"))
+            {
+                Active = note.ContainsTag(template_save_selection_tag)
+            };
+            saveSelectionCheckbutton.Toggled += (o, e) => {
 				if (saveSelectionCheckbutton.Active)
 					note.AddTag (template_save_selection_tag);
 				else
 					note.RemoveTag (template_save_selection_tag);
 			};
-			
-			var saveTitleCheckbutton = new Gtk.CheckButton (Catalog.GetString ("Save _Title"));
-			saveTitleCheckbutton.Active = note.ContainsTag (template_save_title_tag);
-			saveTitleCheckbutton.Toggled += (o, e) => {
+
+            var saveTitleCheckbutton = new CheckButton(Catalog.GetString("Save _Title"))
+            {
+                Active = note.ContainsTag(template_save_title_tag)
+            };
+            saveTitleCheckbutton.Toggled += (o, e) => {
 				if (saveTitleCheckbutton.Active)
 					note.AddTag (template_save_title_tag);
 				else
 					note.RemoveTag (template_save_title_tag);
 			};
 
-			bar.PackStart (infoLabel);
-			bar.PackStart (untemplateButton);
-			bar.PackStart (saveSizeCheckbutton);
-			bar.PackStart (saveSelectionCheckbutton);
-			bar.PackStart (saveTitleCheckbutton);
+			bar.PackStart (infoLabel, false, false, 0);
+			bar.PackStart (untemplateButton, false, false, 0);
+			bar.PackStart (saveSizeCheckbutton, false, false, 0);
+			bar.PackStart (saveSelectionCheckbutton, false, false, 0);
+			bar.PackStart (saveTitleCheckbutton, false, false, 0);
 
 			if (note.ContainsTag (template_tag))
 				bar.ShowAll ();
@@ -616,7 +650,7 @@ namespace Tomboy
 
 			note.TagRemoved += delegate (Note taggedNote, string tag) {
 				if (taggedNote == note && tag == template_tag.NormalizedName)
-					bar.HideAll ();
+					bar.Hide ();
 			};
 
 			return bar;
@@ -1322,223 +1356,226 @@ namespace Tomboy
 		// menuitem depending on the cursor poition.
 		//
 
-		public NoteTextMenu (Gtk.AccelGroup accel_group,
-		                     NoteBuffer     buffer,
-		                     UndoManager    undo_manager)
-			: base ()
+		public NoteTextMenu(Gtk.AccelGroup accel_group,
+							 NoteBuffer buffer,
+							 UndoManager undo_manager)
+			: base()
 		{
 			this.buffer = buffer;
 			this.undo_manager = undo_manager;
 
-			if (undo_manager != null) {
-				undo = new Gtk.ImageMenuItem (Gtk.Stock.Undo, accel_group);
+			if (undo_manager != null)
+			{
+				undo = new Gtk.ImageMenuItem(Gtk.Stock.Undo, accel_group);
 				undo.Activated += UndoClicked;
-				undo.AddAccelerator ("activate",
-				                     accel_group,
-				                     (uint) Gdk.Key.z,
-				                     Gdk.ModifierType.ControlMask,
-				                     Gtk.AccelFlags.Visible);
-				undo.Show ();
-				Append (undo);
+				undo.AddAccelerator("activate",
+									 accel_group,
+									 (uint)Gdk.Key.z,
+									 Gdk.ModifierType.ControlMask,
+									 Gtk.AccelFlags.Visible);
+				undo.Show();
+				Append(undo);
 
-				redo = new Gtk.ImageMenuItem (Gtk.Stock.Redo, accel_group);
+				redo = new Gtk.ImageMenuItem(Gtk.Stock.Redo, accel_group);
 				redo.Activated += RedoClicked;
-				redo.AddAccelerator ("activate",
-				                     accel_group,
-				                     (uint) Gdk.Key.z,
-				                     (Gdk.ModifierType.ControlMask |
-				                      Gdk.ModifierType.ShiftMask),
-				                     Gtk.AccelFlags.Visible);
-				redo.Show ();
-				Append (redo);
+				redo.AddAccelerator("activate",
+									 accel_group,
+									 (uint)Gdk.Key.z,
+									 (Gdk.ModifierType.ControlMask |
+									  Gdk.ModifierType.ShiftMask),
+									 Gtk.AccelFlags.Visible);
+				redo.Show();
+				Append(redo);
 
-				Gtk.SeparatorMenuItem undo_spacer = new Gtk.SeparatorMenuItem ();
-				Append (undo_spacer);
+				Gtk.SeparatorMenuItem undo_spacer = new Gtk.SeparatorMenuItem();
+				Append(undo_spacer);
 
 				// Listen to events so we can sensitize and
 				// enable keybinding
 				undo_manager.UndoChanged += UndoChanged;
 			}
 
-			bold = new Gtk.CheckMenuItem ("<b>" +
-			                              Catalog.GetString ("_Bold") +
-			                              "</b>");
-			MarkupLabel (bold);
-			bold.Data ["Tag"] = "bold";
+			bold = new Gtk.CheckMenuItem("<b>" +
+										  Catalog.GetString("_Bold") +
+										  "</b>");
+			MarkupLabel(bold);
+			bold.Data["Tag"] = "bold";
 			bold.Activated += FontStyleClicked;
-			bold.AddAccelerator ("activate",
-			                     accel_group,
-			                     (uint) Gdk.Key.b,
-			                     Gdk.ModifierType.ControlMask,
-			                     Gtk.AccelFlags.Visible);
+			bold.AddAccelerator("activate",
+								 accel_group,
+								 (uint)Gdk.Key.b,
+								 Gdk.ModifierType.ControlMask,
+								 Gtk.AccelFlags.Visible);
 
-			italic = new Gtk.CheckMenuItem ("<i>" +
-			                                Catalog.GetString ("_Italic") +
-			                                "</i>");
-			MarkupLabel (italic);
-			italic.Data ["Tag"] = "italic";
+			italic = new Gtk.CheckMenuItem("<i>" +
+											Catalog.GetString("_Italic") +
+											"</i>");
+			MarkupLabel(italic);
+			italic.Data["Tag"] = "italic";
 			italic.Activated += FontStyleClicked;
-			italic.AddAccelerator ("activate",
-			                       accel_group,
-			                       (uint) Gdk.Key.i,
-			                       Gdk.ModifierType.ControlMask,
-			                       Gtk.AccelFlags.Visible);
+			italic.AddAccelerator("activate",
+								   accel_group,
+								   (uint)Gdk.Key.i,
+								   Gdk.ModifierType.ControlMask,
+								   Gtk.AccelFlags.Visible);
 
-			strikeout = new Gtk.CheckMenuItem ("<s>" +
-			                                   Catalog.GetString ("_Strikeout") +
-			                                   "</s>");
-			MarkupLabel (strikeout);
-			strikeout.Data ["Tag"] = "strikethrough";
+			strikeout = new Gtk.CheckMenuItem("<s>" +
+											   Catalog.GetString("_Strikeout") +
+											   "</s>");
+			MarkupLabel(strikeout);
+			strikeout.Data["Tag"] = "strikethrough";
 			strikeout.Activated += FontStyleClicked;
-			strikeout.AddAccelerator ("activate",
-			                          accel_group,
-			                          (uint) Gdk.Key.s,
-			                          Gdk.ModifierType.ControlMask,
-			                          Gtk.AccelFlags.Visible);
+			strikeout.AddAccelerator("activate",
+									  accel_group,
+									  (uint)Gdk.Key.s,
+									  Gdk.ModifierType.ControlMask,
+									  Gtk.AccelFlags.Visible);
 
-			highlight = new Gtk.CheckMenuItem ("<span background='yellow'>" +
-			                                   Catalog.GetString ("_Highlight") +
-			                                   "</span>");
-			MarkupLabel (highlight);
-			highlight.Data ["Tag"] = "highlight";
+			highlight = new Gtk.CheckMenuItem("<span background='yellow'>" +
+											   Catalog.GetString("_Highlight") +
+											   "</span>");
+			MarkupLabel(highlight);
+			highlight.Data["Tag"] = "highlight";
 			highlight.Activated += FontStyleClicked;
-			highlight.AddAccelerator ("activate",
-			                          accel_group,
-			                          (uint) Gdk.Key.h,
-			                          Gdk.ModifierType.ControlMask,
-			                          Gtk.AccelFlags.Visible);
+			highlight.AddAccelerator("activate",
+									  accel_group,
+									  (uint)Gdk.Key.h,
+									  Gdk.ModifierType.ControlMask,
+									  Gtk.AccelFlags.Visible);
 
-			Gtk.SeparatorMenuItem spacer1 = new Gtk.SeparatorMenuItem ();
+			Gtk.SeparatorMenuItem spacer1 = new Gtk.SeparatorMenuItem();
 
-			Gtk.MenuItem font_size = new Gtk.MenuItem (Catalog.GetString ("Font Size"));
+			Gtk.MenuItem font_size = new Gtk.MenuItem(Catalog.GetString("Font Size"));
 			font_size.Sensitive = false;
 
-			normal = new Gtk.RadioMenuItem (Catalog.GetString ("_Normal"));
-			MarkupLabel (normal);
+			normal = new Gtk.RadioMenuItem(Catalog.GetString("_Normal"));
+			MarkupLabel(normal);
 			normal.Active = true;
-			normal.AddAccelerator ("activate",
+			normal.AddAccelerator("activate",
 						accel_group,
-						(uint) Gdk.Key.Key_0,
+						(uint)Gdk.Key.Key_0,
 						Gdk.ModifierType.ControlMask,
 						Gtk.AccelFlags.Visible);
-			normal.AddAccelerator ("activate",
+			normal.AddAccelerator("activate",
 						accel_group,
-						(uint) Gdk.Key.KP_0,
+						(uint)Gdk.Key.KP_0,
 						Gdk.ModifierType.ControlMask,
 						Gtk.AccelFlags.Visible);
 			normal.Activated += FontSizeActivated;
 
-			huge = new Gtk.RadioMenuItem (normal.Group,
-			                              "<span size=\"x-large\">" +
-			                              Catalog.GetString ("Hu_ge") +
-			                              "</span>");
-			MarkupLabel (huge);
-			huge.Data ["Tag"] = "size:huge";
+			huge = new Gtk.RadioMenuItem(normal.Group,
+										  "<span size=\"x-large\">" +
+										  Catalog.GetString("Hu_ge") +
+										  "</span>");
+			MarkupLabel(huge);
+			huge.Data["Tag"] = "size:huge";
 			huge.Activated += FontSizeActivated;
 
-			large = new Gtk.RadioMenuItem (huge.Group,
-			                               "<span size=\"large\">" +
-			                               Catalog.GetString ("_Large") +
-			                               "</span>");
-			MarkupLabel (large);
-			large.Data ["Tag"] = "size:large";
+			large = new Gtk.RadioMenuItem(huge.Group,
+										   "<span size=\"large\">" +
+										   Catalog.GetString("_Large") +
+										   "</span>");
+			MarkupLabel(large);
+			large.Data["Tag"] = "size:large";
 			large.Activated += FontSizeActivated;
 
-			small = new Gtk.RadioMenuItem (large.Group,
-			                               "<span size=\"small\">" +
-			                               Catalog.GetString ("S_mall") +
-			                               "</span>");
-			MarkupLabel (small);
-			small.Data ["Tag"] = "size:small";
+			small = new Gtk.RadioMenuItem(large.Group,
+										   "<span size=\"small\">" +
+										   Catalog.GetString("S_mall") +
+										   "</span>");
+			MarkupLabel(small);
+			small.Data["Tag"] = "size:small";
 			small.Activated += FontSizeActivated;
 
-			hidden_no_size = new Gtk.RadioMenuItem (small.Group, string.Empty);
-			hidden_no_size.Hide ();
+			hidden_no_size = new Gtk.RadioMenuItem(small.Group, string.Empty);
+			hidden_no_size.Hide();
 
-			increase_font = new Gtk.MenuItem (Catalog.GetString ("Increase Font Size"));
-			increase_font.AddAccelerator ("activate",
+			increase_font = new Gtk.MenuItem(Catalog.GetString("Increase Font Size"));
+			increase_font.AddAccelerator("activate",
 						accel_group,
-						(uint) Gdk.Key.plus,
+						(uint)Gdk.Key.plus,
 						Gdk.ModifierType.ControlMask,
 						Gtk.AccelFlags.Visible);
-			increase_font.AddAccelerator ("activate",
+			increase_font.AddAccelerator("activate",
 						accel_group,
-						(uint) Gdk.Key.KP_Add,
+						(uint)Gdk.Key.KP_Add,
 						Gdk.ModifierType.ControlMask,
 						Gtk.AccelFlags.Visible);
-			increase_font.AddAccelerator ("activate",
+			increase_font.AddAccelerator("activate",
 						accel_group,
-						(uint) Gdk.Key.equal,
+						(uint)Gdk.Key.equal,
 						Gdk.ModifierType.ControlMask,
 						Gtk.AccelFlags.Visible);
 			increase_font.Activated += IncreaseFontClicked;
 
-			decrease_font = new Gtk.MenuItem (Catalog.GetString ("Decrease Font Size"));
-			decrease_font.AddAccelerator ("activate",
+			decrease_font = new Gtk.MenuItem(Catalog.GetString("Decrease Font Size"));
+			decrease_font.AddAccelerator("activate",
 						accel_group,
-						(uint) Gdk.Key.minus,
+						(uint)Gdk.Key.minus,
 						Gdk.ModifierType.ControlMask,
 						Gtk.AccelFlags.Visible);
-			decrease_font.AddAccelerator ("activate",
+			decrease_font.AddAccelerator("activate",
 						accel_group,
-						(uint) Gdk.Key.KP_Subtract,
+						(uint)Gdk.Key.KP_Subtract,
 						Gdk.ModifierType.ControlMask,
 						Gtk.AccelFlags.Visible);
-			decrease_font.AddAccelerator ("activate",
+			decrease_font.AddAccelerator("activate",
 						accel_group,
-						(uint) Gdk.Key.underscore,
+						(uint)Gdk.Key.underscore,
 						Gdk.ModifierType.ControlMask,
 						Gtk.AccelFlags.Visible);
 			decrease_font.Activated += DecreaseFontClicked;
 
-			Gtk.SeparatorMenuItem spacer2 = new Gtk.SeparatorMenuItem ();
+			Gtk.SeparatorMenuItem spacer2 = new Gtk.SeparatorMenuItem();
 
-			bullets = new Gtk.CheckMenuItem (Catalog.GetString ("Bullets"));
+			bullets = new Gtk.CheckMenuItem(Catalog.GetString("Bullets"));
 			bullets.Activated += ToggleBulletsClicked;
 
-			increase_indent = new Gtk.ImageMenuItem (Gtk.Stock.Indent, accel_group);
-			increase_indent.AddAccelerator ("activate",
+			increase_indent = new Gtk.ImageMenuItem(Gtk.Stock.Indent, accel_group);
+			increase_indent.AddAccelerator("activate",
 						accel_group,
-						(uint) Gdk.Key.Right,
+						(uint)Gdk.Key.Right,
 						Gdk.ModifierType.Mod1Mask,
 						Gtk.AccelFlags.Visible);
 			increase_indent.Activated += IncreaseIndentClicked;
-			increase_indent.Show ();
+			increase_indent.Show();
 
-			decrease_indent = new Gtk.ImageMenuItem (Gtk.Stock.Unindent, accel_group);
-			decrease_indent.AddAccelerator ("activate",
+			decrease_indent = new Gtk.ImageMenuItem(Gtk.Stock.Unindent, accel_group);
+			decrease_indent.AddAccelerator("activate",
 						accel_group,
-						(uint) Gdk.Key.Left,
+						(uint)Gdk.Key.Left,
 						Gdk.ModifierType.Mod1Mask,
 						Gtk.AccelFlags.Visible);
 			decrease_indent.Activated += DecreaseIndentClicked;
-			decrease_indent.Show ();
+			decrease_indent.Show();
 
-			RefreshState ();
+			RefreshState();
 
-			Append (bold);
-			Append (italic);
-			Append (strikeout);
-			Append (highlight);
-			Append (spacer1);
-			Append (font_size);
-			Append (small);
-			Append (normal);
-			Append (large);
-			Append (huge);
-			Append (increase_font);
-			Append (decrease_font);
-			Append (spacer2);
-			Append (bullets);
-			Append (increase_indent);
-			Append (decrease_indent);
-			ShowAll ();
+			Append(bold);
+			Append(italic);
+			Append(strikeout);
+			Append(highlight);
+			Append(spacer1);
+			Append(font_size);
+			Append(small);
+			Append(normal);
+			Append(large);
+			Append(huge);
+			Append(increase_font);
+			Append(decrease_font);
+			Append(spacer2);
+			Append(bullets);
+			Append(increase_indent);
+			Append(decrease_indent);
+			ShowAll();
 
-			theme_hack_menu = new Menu ();
-			theme_hack_menu.Realize ();
-			theme_hack_menu.StyleSet += delegate {
-				ModifyBg (StateType.Normal, theme_hack_menu.Style.Background (StateType.Normal));
-			};
+			theme_hack_menu = new Menu();
+			theme_hack_menu.Realize();
+			// TODO: Assess whether this needs to be re-introduced, since in GTK 3 this works
+			// completely diferent. 
+			// theme_hack_menu.StyleSet += delegate {
+			// 	ModifyBg (StateType.Normal, theme_hack_menu.Style.Background (StateType.Normal));
+			// };
 		}
 
 		protected override void OnShown ()

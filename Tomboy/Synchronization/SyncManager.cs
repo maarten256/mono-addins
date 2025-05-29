@@ -150,6 +150,7 @@ namespace Tomboy.Sync
 
 		public static void Initialize ()
 		{
+			Logger.Debug ("Initializing SyncManager...");
 			// NOTE: static constructor should get called if this
 			// is the first reference to SyncManager
 

@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -29,7 +28,7 @@ namespace Tomboy
 
 		Gtk.ColorButton search_match_color_button;
 
-		Mono.Addins.Gui.AddinTreeWidget addin_tree;
+		CompatAddinTreeWidget addin_tree;
 
 		Gtk.Button enable_addin_button;
 		Gtk.Button disable_addin_button;
@@ -40,24 +39,24 @@ namespace Tomboy
 		private Gtk.RadioButton renameOnConflictRadio;
 		private Gtk.RadioButton overwriteOnConflictRadio;
 
-		/// <summary>
-		/// Keep track of the opened addin prefs dialogs so other windows
-		/// can be interacted with (as opposed to opening these as modal
-		/// dialogs).
-		///
-		/// Key = Mono.Addins.Addin.Id
-		/// </summary>
-		Dictionary<string, Gtk.Dialog> addin_prefs_dialogs;
+        /// <summary>
+        /// Keep track of the opened addin prefs dialogs so other windows
+        /// can be interacted with (as opposed to opening these as modal
+        /// dialogs).
+        ///
+        /// Key = Mono.Addins.Addin.Id
+        /// </summary>
+        readonly Dictionary<string, CompatDialog> addin_prefs_dialogs;
 
-		/// <summary>
-		/// Used to keep track of open AddinInfoDialogs.
-		/// Key = Mono.Addins.Addin.Id
-		/// </summary>
-		Dictionary<string, Gtk.Dialog> addin_info_dialogs;
+        /// <summary>
+        /// Used to keep track of open AddinInfoDialogs.
+        /// Key = Mono.Addins.Addin.Id
+        /// </summary>
+        readonly Dictionary<string, CompatDialog> addin_info_dialogs;
 
-		public PreferencesDialog (NoteManager manager) : base(Gtk.WindowType.Toplevel)
+		public PreferencesDialog (NoteManager manager) : base(WindowType.Toplevel)
 		{
-			this.addin_manager = manager.AddinManager;
+			addin_manager = manager.AddinManager;
 			
 			IconName = "tomboy";
 			BorderWidth = 5;
@@ -65,60 +64,61 @@ namespace Tomboy
 			Title = Catalog.GetString ("Tomboy Preferences");
 			WindowPosition = WindowPosition.Center;
 			
-			addin_prefs_dialogs = new Dictionary<string, Gtk.Dialog> ();
-			addin_info_dialogs = new Dictionary<string, Gtk.Dialog> ();
+			addin_prefs_dialogs = [];
+			addin_info_dialogs = [];
+
+            // Notebook Tabs (Editing, Hotkeys)...
+
+            Notebook notebook = new()
+            {
+                TabPos = PositionType.Top
+            };
+            notebook.Show ();
 			
-			// Notebook Tabs (Editing, Hotkeys)...
+			notebook.AppendPage (MakeEditingPane (), new Label (Catalog.GetString ("Editing")));
 			
-			Gtk.Notebook notebook = new Gtk.Notebook ();
-			notebook.TabPos = Gtk.PositionType.Top;
-			notebook.Show ();
+			if (Services.Keybinder is not NullKeybinder)
+				notebook.AppendPage (MakeHotkeysPane (), new Label (Catalog.GetString ("Hotkeys")));
 			
-			notebook.AppendPage (MakeEditingPane (), new Gtk.Label (Catalog.GetString ("Editing")));
-			
-			if (!(Services.Keybinder is NullKeybinder))
-				notebook.AppendPage (MakeHotkeysPane (), new Gtk.Label (Catalog.GetString ("Hotkeys")));
-			
-			notebook.AppendPage (MakeSyncPane (), new Gtk.Label (Catalog.GetString ("Synchronization")));
-			notebook.AppendPage (MakeAddinsPane (), new Gtk.Label (Catalog.GetString ("Add-ins")));
+			notebook.AppendPage (MakeSyncPane (), new Label (Catalog.GetString ("Synchronization")));
+			notebook.AppendPage (MakeAddinsPane (), new Label (Catalog.GetString ("Add-ins")));
 			
 			// TODO: Figure out a way to have these be placed in a specific order
 			foreach (PreferenceTabAddin tabAddin in addin_manager.GetPreferenceTabAddins ()) {
 				Logger.Debug ("Adding preference tab addin: {0}", tabAddin.GetType ().Name);
 				try {
-					string tabName;
-					Gtk.Widget tabWidget;
-					if (tabAddin.GetPreferenceTabWidget (this, out tabName, out tabWidget) == true) {
-						notebook.AppendPage (tabWidget, new Gtk.Label (tabName));
-					}
-				} catch (Exception e) {
+                    if (tabAddin.GetPreferenceTabWidget(this, out string tabName, out Widget tabWidget) == true)
+                    {
+                        notebook.AppendPage(tabWidget, new Label(tabName));
+                    }
+                } catch (Exception e) {
 					Logger.Warn ("Problems adding preferences tab addin: {0}", tabAddin.GetType ().Name);
 					Logger.Debug ("{0}:\n{1}", e.Message, e.StackTrace);
 				}
 			}
-			Gtk.VBox VBox = new Gtk.VBox ();
+			VBox VBox = new VBox ();
 			VBox.PackStart (notebook, true, true, 0);
 			
 			addin_manager.ApplicationAddinListChanged += OnAppAddinListChanged;
-			
-			// Close Button
-			Gtk.Button button = new Gtk.Button (Gtk.Stock.Close);
-			button.CanDefault = true;
-			button.Label = "Close";
-			button.Clicked += OnClickedClose;
+
+            // Close Button
+            Button button = new(Stock.Close)
+            {
+                CanDefault = true,
+                Label = "Close"
+            };
+            button.Clicked += OnClickedClose;
 			VBox.Add (button);
 			button.Show ();
 			
-			Gtk.AccelGroup accel_group = new Gtk.AccelGroup ();
+			AccelGroup accel_group = new AccelGroup ();
 			AddAccelGroup (accel_group);
 			
 			button.AddAccelerator ("activate", accel_group, (uint)Gdk.Key.Escape, 0, 0);
 			
-			this.Add (VBox);
-			if ((this.Child != null)) {
-				this.Child.ShowAll ();
-			}
-			this.Show ();
+			Add (VBox);
+			Child?.ShowAll ();
+			Show ();
 			Preferences.SettingChanged += HandlePreferencesSettingChanged;
 		}
 		
@@ -225,7 +225,7 @@ namespace Tomboy
 			// Custom font...
 			Gtk.HBox font_box = new Gtk.HBox (false, 0);
 			check = MakeCheckButton (Catalog.GetString ("Use custom _font"));
-			font_box.PackStart (check);
+			font_box.PackStart (check, false, false, 0);
 
 			font_peditor =
 			        Services.Factory.CreatePropertyEditorToggleButton (Preferences.ENABLE_CUSTOM_FONT,
@@ -234,7 +234,7 @@ namespace Tomboy
 
 			font_button = MakeFontButton ();
 			font_button.Sensitive = check.Active;
-			font_box.PackStart (font_button);
+			font_box.PackStart (font_button, false, false, 0);
 			font_box.ShowAll ();
 			options_list.PackStart (font_box, false, false, 0);
 
@@ -243,7 +243,7 @@ namespace Tomboy
 			// Custom search match highlight color
 			Gtk.HBox search_match_color_box = new Gtk.HBox (false, 0);
 			check = MakeCheckButton (Catalog.GetString ("Use custom search match highlight _color"));
-			search_match_color_box.PackStart (check);
+			search_match_color_box.PackStart (check, false, false, 0);
 
 			search_match_color_peditor =
 				Services.Factory.CreatePropertyEditorToggleButton (Preferences.ENABLE_CUSTOM_SEARCH_MATCH_COLOR, check);
@@ -251,7 +251,7 @@ namespace Tomboy
 
 			search_match_color_button = MakeSearchMatchColorButton ();
 			search_match_color_button.Sensitive = check.Active;
-			search_match_color_box.PackStart (search_match_color_button);
+			search_match_color_box.PackStart (search_match_color_button, false, false, 0);
 			search_match_color_box.ShowAll ();
 			options_list.PackStart (search_match_color_box, false, false, 0);
 
@@ -260,7 +260,7 @@ namespace Tomboy
 			// Note renaming bahvior
 			Gtk.HBox rename_behavior_box = new Gtk.HBox (false, 0);
 			label = MakeLabel (Catalog.GetString ("When renaming a linked note: "));
-			rename_behavior_box.PackStart (label);
+			rename_behavior_box.PackStart (label, false, false, 0);
 			rename_behavior_combo = new Gtk.ComboBox (new string [] {
 				Catalog.GetString ("Ask me what to do"),
 				Catalog.GetString ("Never rename links"),
@@ -274,7 +274,7 @@ namespace Tomboy
 			rename_behavior_combo.Changed += (o, e) =>
 				Preferences.Set (Preferences.NOTE_RENAME_BEHAVIOR,
 				                 rename_behavior_combo.Active);
-			rename_behavior_box.PackStart (rename_behavior_combo);
+			rename_behavior_box.PackStart (rename_behavior_combo, false, false, 0);
 			rename_behavior_box.ShowAll ();
 			options_list.PackStart (rename_behavior_box, false, false, 0);
 			
@@ -563,9 +563,9 @@ namespace Tomboy
 			};
 			autosyncSpinner.ValueChanged += updateTimeoutPref;
 
-			autosyncBox.PackStart (autosyncCheck);
-			autosyncBox.PackStart (autosyncSpinner);
-			autosyncBox.PackStart (autosyncExtraText);
+			autosyncBox.PackStart (autosyncCheck, false, false, 0);
+			autosyncBox.PackStart (autosyncSpinner, false, false, 0);
+			autosyncBox.PackStart (autosyncExtraText, false, false, 0);
 			vbox.PackStart (autosyncBox, false, true, 0);
 
 			Gtk.HButtonBox bbox = new Gtk.HButtonBox ();
@@ -615,91 +615,112 @@ namespace Tomboy
 			return addin1.Name.CompareTo (addin2.Name);
 		}
 
-		private void ComboBoxTextDataFunc (Gtk.CellLayout cell_layout, Gtk.CellRenderer cell,
-		                                   Gtk.TreeModel tree_model, Gtk.TreeIter iter)
+		private void ComboBoxTextDataFunc(ICellLayout cell_layout, CellRenderer cell,
+										   ITreeModel tree_model, TreeIter iter)
 		{
-			Gtk.CellRendererText crt = cell as Gtk.CellRendererText;
-			SyncServiceAddin addin = tree_model.GetValue (iter, 0) as SyncServiceAddin;
-			if (addin == null) {
+			CellRendererText crt = cell as CellRendererText;
+			SyncServiceAddin addin = tree_model.GetValue(iter, 0) as SyncServiceAddin;
+			if (addin == null)
+			{
 				crt.Text = string.Empty;
-			} else {
+			}
+			else
+			{
 				crt.Text = addin.Name;
 			}
 		}
 
 		// Page 3
 		// Extension Preferences
-		public Gtk.Widget MakeAddinsPane ()
+		public Widget MakeAddinsPane ()
 		{
-			Gtk.VBox vbox = new Gtk.VBox (false, 6);
-			vbox.BorderWidth = 6;
-			Gtk.Label l = new Gtk.Label (Catalog.GetString (
-			                                     "The following add-ins are installed"));
-			l.Xalign = 0;
-			l.Show ();
-			vbox.PackStart (l, false, false, 0);
+            VBox vbox = new VBox(false, 6)
+            {
+                BorderWidth = 6
+            };
+            Label label = new(Catalog.GetString(
+							  "The following add-ins are installed"))
+            {
+                Xalign = 0
+            };
+            label.Show ();
+			vbox.PackStart (label, false, false, 0);
 
-			Gtk.HBox hbox = new Gtk.HBox (false, 6);
+			HBox hbox = new HBox (false, 6);
 
 			// TreeView of Add-ins
-			Gtk.TreeView tree = new Gtk.TreeView ();
-			addin_tree = new Mono.Addins.Gui.AddinTreeWidget (tree);
+			TreeView tree = [];
+			addin_tree = new CompatAddinTreeWidget (tree);
 
 			tree.Show ();
 
-			Gtk.ScrolledWindow sw = new Gtk.ScrolledWindow ();
-			sw.HscrollbarPolicy = Gtk.PolicyType.Automatic;
-			sw.VscrollbarPolicy = Gtk.PolicyType.Automatic;
-			sw.ShadowType = Gtk.ShadowType.In;
-			sw.Add (tree);
+            Gtk.ScrolledWindow sw = new ScrolledWindow
+            {
+                HscrollbarPolicy = PolicyType.Automatic,
+                VscrollbarPolicy = PolicyType.Automatic,
+                ShadowType = ShadowType.In
+            };
+            sw.Add (tree);
 			sw.Show ();
-			Gtk.LinkButton get_more_link =
-				new Gtk.LinkButton ("https://wiki.gnome.org/Apps/Tomboy/PluginList",
-				                    Catalog.GetString ("Get More Add-Ins..."));
+			LinkButton get_more_link =
+				new("https://wiki.gnome.org/Apps/Tomboy/PluginList",
+					Catalog.GetString ("Get More Add-Ins..."));
 			get_more_link.Show ();
-			Gtk.VBox tree_box = new Gtk.VBox (false, 0);
-			tree_box.Add (sw);
+			VBox tree_box = new VBox(false, 0)
+            {
+                sw
+            };
 			tree_box.PackEnd (get_more_link, false, false, 5);
 			tree_box.Show ();
 			hbox.PackStart (tree_box, true, true, 0);
 
-			// Action Buttons (right of TreeView)
-			Gtk.VButtonBox button_box = new Gtk.VButtonBox ();
-			button_box.Spacing = 4;
-			button_box.Layout = Gtk.ButtonBoxStyle.Start;
+            // Action Buttons (right of TreeView)
+            VButtonBox button_box = new VButtonBox
+            {
+                Spacing = 4,
+                Layout = ButtonBoxStyle.Start
+            };
 
-			// TODO: In a future version, add in an "Install Add-ins..." button
+            // TODO: In a future version, add in an "Install Add-ins..." button
 
-			// TODO: In a future version, add in a "Repositories..." button
+            // TODO: In a future version, add in a "Repositories..." button
 
-			enable_addin_button =
-			        new Gtk.Button (Catalog.GetString ("_Enable"));
-			enable_addin_button.Sensitive = false;
-			enable_addin_button.Clicked += OnEnableAddinButton;
+            enable_addin_button =
+                    new Button(Catalog.GetString("_Enable"))
+                    {
+                        Sensitive = false
+                    };
+            enable_addin_button.Clicked += OnEnableAddinButton;
 			enable_addin_button.Show ();
 
-			disable_addin_button =
-			        new Gtk.Button (Catalog.GetString ("_Disable"));
-			disable_addin_button.Sensitive = false;
-			disable_addin_button.Clicked += OnDisableAddinButton;
+            disable_addin_button =
+                    new Gtk.Button(Catalog.GetString("_Disable"))
+                    {
+                        Sensitive = false
+                    };
+            disable_addin_button.Clicked += OnDisableAddinButton;
 			disable_addin_button.Show ();
 
-			addin_prefs_button =
-			        new Gtk.Button (Gtk.Stock.Preferences);
-			addin_prefs_button.Sensitive = false;
-			addin_prefs_button.Clicked += OnAddinPrefsButton;
+            addin_prefs_button =
+                    new Gtk.Button(Stock.Preferences)
+                    {
+                        Sensitive = false
+                    };
+            addin_prefs_button.Clicked += OnAddinPrefsButton;
 			addin_prefs_button.Show ();
 
-			addin_info_button =
-			        new Gtk.Button (Gtk.Stock.Info);
-			addin_info_button.Sensitive = false;
-			addin_info_button.Clicked += OnAddinInfoButton;
+            addin_info_button =
+                    new Gtk.Button(Stock.Info)
+                    {
+                        Sensitive = false
+                    };
+            addin_info_button.Clicked += OnAddinInfoButton;
 			addin_info_button.Show ();
 
-			button_box.PackStart (enable_addin_button);
-			button_box.PackStart (disable_addin_button);
-			button_box.PackStart (addin_prefs_button);
-			button_box.PackStart (addin_info_button);
+			button_box.PackStart (enable_addin_button, false, false, 0);
+			button_box.PackStart (disable_addin_button, false, false, 0);
+			button_box.PackStart (addin_prefs_button, false, false, 0);
+			button_box.PackStart (addin_info_button, false, false, 0);
 
 			button_box.Show ();
 			hbox.PackStart (button_box, false, false, 0);
@@ -787,33 +808,31 @@ namespace Tomboy
 
 		void OnAddinPrefsButton (object sender, EventArgs args)
 		{
-			Gtk.Dialog dialog = null;
-			Mono.Addins.Addin addin =
-			        addin_tree.ActiveAddinData as Mono.Addins.Addin;
+			CompatDialog dialog = null;
 
-			if (addin == null)
-				return;
+            if (addin_tree.ActiveAddinData is not Mono.Addins.Addin addin)
+                return;
 
-			if (addin_prefs_dialogs.ContainsKey (addin.Id) == false) {
+            if (addin_prefs_dialogs.ContainsKey (addin.Id) == false) {
 				// A preference dialog isn't open already so create a new one
-				Gtk.Image icon =
-				        new Gtk.Image (Gtk.Stock.Preferences, Gtk.IconSize.Dialog);
-				Gtk.Label caption = new Gtk.Label ();
-				caption.Markup = string.Format (
-				                         "<span size='large' weight='bold'>{0} {1}</span>",
-				                         addin.Name, addin.Version);
-				caption.Xalign = 0;
-				caption.UseMarkup = true;
-				caption.UseUnderline = false;
+				Image icon = new(Stock.Preferences, IconSize.Dialog);
+                Label caption = new()
+                {
+                    Markup = string.Format(
+									"<span size='large' weight='bold'>{0} {1}</span>",
+									addin.Name, addin.Version),
+                    Xalign = 0,
+                    UseMarkup = true,
+                    UseUnderline = false
+                };
 
-				Gtk.Widget pref_widget =
+                Widget pref_widget =
 				        addin_manager.CreateAddinPreferenceWidget (addin);
 
-				if (pref_widget == null)
-					pref_widget = new Gtk.Label (Catalog.GetString ("Not Implemented"));
+				pref_widget ??= new Label (Catalog.GetString ("Not Implemented"));
 
-				Gtk.HBox hbox = new Gtk.HBox (false, 6);
-				Gtk.VBox vbox = new Gtk.VBox (false, 6);
+				HBox hbox = new HBox (false, 6);
+				VBox vbox = new VBox (false, 6);
 				vbox.BorderWidth = 6;
 
 				hbox.PackStart (icon, false, false, 0);
@@ -823,12 +842,12 @@ namespace Tomboy
 				vbox.PackStart (pref_widget, true, true, 0);
 				vbox.ShowAll ();
 
-				dialog = new Gtk.Dialog (
+				dialog = new CompatDialog (
+				        this,
+				        DialogFlags.DestroyWithParent | DialogFlags.Modal,
 				        string.Format (Catalog.GetString ("{0} Preferences"),
 				                       addin.Name),
-				        this,
-				        Gtk.DialogFlags.DestroyWithParent | Gtk.DialogFlags.NoSeparator,
-				        Gtk.Stock.Close, Gtk.ResponseType.Close);
+				        Stock.Close, ResponseType.Close);
 
 				dialog.VBox.PackStart (vbox, true, true, 0);
 				dialog.DeleteEvent += AddinPrefDialogDeleted;
@@ -874,7 +893,7 @@ namespace Tomboy
 			if (addin == null)
 				return;
 
-			Gtk.Dialog dialog = null;
+			CompatDialog dialog = null;
 			if (addin_info_dialogs.ContainsKey (addin.Id) == false) {
 				dialog = new AddinInfoDialog (
 				        Mono.Addins.Setup.SetupService.GetAddinHeader (addin),
@@ -1022,29 +1041,33 @@ namespace Tomboy
 				savedBehavior = (SyncTitleConflictResolution)dlgBehaviorPref;
 
 			// Create dialog
-			Gtk.Dialog advancedDlg =
-			        new Gtk.Dialog (Catalog.GetString ("Other Synchronization Options"),
-			                        this,
-			                        Gtk.DialogFlags.DestroyWithParent | Gtk.DialogFlags.Modal | Gtk.DialogFlags.NoSeparator,
-			                        Gtk.Stock.Close, Gtk.ResponseType.Close);
-			// Populate dialog
-			Gtk.Label label =
-			        new Gtk.Label (Catalog.GetString ("When a conflict is detected between " +
-			                                          "a local note and a note on the configured " +
-			                                          "synchronization server:"));
-			label.Wrap = true;
-			label.Xalign = 0;
+			CompatDialog advancedDlg =
+			        new CompatDialog (this,
+			                          DialogFlags.DestroyWithParent | DialogFlags.Modal | DialogFlags.UseHeaderBar,
+									  Catalog.GetString ("Other Synchronization Options"),
+									  Stock.Close, ResponseType.Close);
+            // Populate dialog
+            Label label =
+                    new(Catalog.GetString("When a conflict is detected between " +
+                                          "a local note and a note on the configured " +
+                                          "synchronization server:"))
+                    {
+                        Wrap = true,
+                        Xalign = 0
+                    };
 
-			promptOnConflictRadio =
-			        new Gtk.RadioButton (Catalog.GetString ("Always ask me what to do."));
+            promptOnConflictRadio =
+			        new RadioButton (Catalog.GetString ("Always ask me what to do."));
 			promptOnConflictRadio.Toggled += OnConflictOptionToggle;
 
 			renameOnConflictRadio =
-			        new Gtk.RadioButton (promptOnConflictRadio, Catalog.GetString ("Rename my local note."));
+			        new RadioButton (promptOnConflictRadio,
+									 Catalog.GetString ("Rename my local note."));
 			renameOnConflictRadio.Toggled += OnConflictOptionToggle;
 
 			overwriteOnConflictRadio =
-			        new Gtk.RadioButton (promptOnConflictRadio, Catalog.GetString ("Replace my local note with the server's update."));
+			        new RadioButton (promptOnConflictRadio,
+									 Catalog.GetString ("Replace my local note with the server's update."));
 			overwriteOnConflictRadio.Toggled += OnConflictOptionToggle;
 
 			switch (savedBehavior) {
@@ -1059,12 +1082,12 @@ namespace Tomboy
 				break;
 			}
 
-			Gtk.VBox vbox = new Gtk.VBox ();
+			VBox vbox = new VBox ();
 			vbox.BorderWidth = 18;
 
-			vbox.PackStart (promptOnConflictRadio);
-			vbox.PackStart (renameOnConflictRadio);
-			vbox.PackStart (overwriteOnConflictRadio);
+			vbox.PackStart (promptOnConflictRadio, false, false, 0);
+			vbox.PackStart (renameOnConflictRadio, false, false, 0);
+			vbox.PackStart (overwriteOnConflictRadio, false, false, 0);
 
 			advancedDlg.VBox.PackStart (label, false, false, 6);
 			advancedDlg.VBox.PackStart (vbox, false, false, 0);
@@ -1349,35 +1372,38 @@ namespace Tomboy
 
 	// TODO: Figure out how to use Mono.Addins.Gui.AddinInfoDialog here instead.
 	// The class here is adapted directly from Mono.Addins.Gui.AddinInfoDialog.
-	class AddinInfoDialog : Gtk.Dialog
+	class AddinInfoDialog : CompatDialog
 	{
-		Mono.Addins.Setup.AddinHeader info;
-		Gtk.Label info_label;
+        readonly Mono.Addins.Setup.AddinHeader info;
+        readonly Label info_label;
 
 		public AddinInfoDialog (
 		        Mono.Addins.Setup.AddinHeader info,
-		        Gtk.Window parent)
-: base (info.Name,
-		        parent,
-		        Gtk.DialogFlags.DestroyWithParent | Gtk.DialogFlags.NoSeparator,
-		        Gtk.Stock.Close, Gtk.ResponseType.Close)
+		        Window parent)
+		: base (parent,
+		        DialogFlags.DestroyWithParent | DialogFlags.UseHeaderBar,
+		        Stock.Close, ResponseType.Close,
+				info.Name)
 		{
 			this.info = info;
 
-			// TODO: Change this icon to be an addin/package icon
-			Gtk.Image icon =
-			        new Gtk.Image (Gtk.Stock.DialogInfo, Gtk.IconSize.Dialog);
-			icon.Yalign = 0;
+            // TODO: Change this icon to be an addin/package icon
+            Image icon = new(Stock.DialogInfo, IconSize.Dialog)
+						{
+							Yalign = 0
+						};
 
-			info_label = new Gtk.Label ();
-			info_label.Xalign = 0;
-			info_label.Yalign = 0;
-			info_label.UseMarkup = true;
-			info_label.UseUnderline = false;
-			info_label.Wrap = true;
+            info_label = new Label
+            {
+                Xalign = 0,
+                Yalign = 0,
+                UseMarkup = true,
+                UseUnderline = false,
+                Wrap = true
+            };
 
-			Gtk.HBox hbox = new Gtk.HBox (false, 6);
-			Gtk.VBox vbox = new Gtk.VBox (false, 12);
+            HBox hbox = new HBox (false, 6);
+			VBox vbox = new VBox (false, 12);
 			hbox.BorderWidth = 12;
 			vbox.BorderWidth = 6;
 

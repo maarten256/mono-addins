@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using Tomboy.Compat;
 using Gtk;
+using Gdk;
+//using System.Runtime.InteropServices;
 
 namespace Tomboy
 {
@@ -19,7 +21,7 @@ namespace Tomboy
 		NoteManager manager;
 
 		Gtk.MenuBar menu_bar;
-		Gtk.ComboBoxEntry find_combo;
+		Gtk.ComboBoxText find_combo;
 		Gtk.Button clear_search_button;
 		Gtk.Statusbar status_bar;
 		Gtk.ScrolledWindow matches_window;
@@ -63,12 +65,35 @@ namespace Tomboy
 		static List<string> previous_searches;
 		static NoteRecentChanges instance;
 
-		static NoteRecentChanges ()
+		// TODO: Clean this up; leaving here for now to capture the pattern.
+		// [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		// private delegate bool ClickedDelegate(IntPtr linkButton);
+
+		// private static bool OnClicked(IntPtr linkButton)
+		// {
+		// 	ShowAllSearchResults();
+
+		// 	string uri = GLib.Marshaller.Utf8PtrToString(uriPtr);
+
+		// 	try
+		// 	{
+		// 		Services.NativeApplication.OpenUrl(uri, null);
+		// 	}
+		// 	catch (Exception e)
+		// 	{
+		// 		GuiUtils.ShowOpeningLocationError(new AboutDialog(aboutDialog), uri, e.Message);
+		// 	}
+
+		// 	// Returning true: we handled the link
+		// 	return true;
+		// }
+
+		static NoteRecentChanges()
 		{
-			note_icon = GuiUtils.GetIcon ("note", 22);
-			all_notes_icon = GuiUtils.GetIcon ("filter-note-all", 22);
-			unfiled_notes_icon = GuiUtils.GetIcon ("filter-note-unfiled", 22);
-			notebook_icon = GuiUtils.GetIcon ("notebook", 22);
+			note_icon = GuiUtils.GetIcon("note", 22);
+			all_notes_icon = GuiUtils.GetIcon("filter-note-all", 22);
+			unfiled_notes_icon = GuiUtils.GetIcon("filter-note-unfiled", 22);
+			notebook_icon = GuiUtils.GetIcon("notebook", 22);
 		}
 
 		public static NoteRecentChanges GetInstance (NoteManager manager)
@@ -82,25 +107,27 @@ namespace Tomboy
 		}
 
 		protected NoteRecentChanges (NoteManager manager)
-: base (Catalog.GetString ("Search All Notes"))
+		: base (Catalog.GetString ("Search All Notes"))
 		{
 			this.manager = manager;
-			this.IconName = "tomboy";
-			this.DefaultWidth = 450;
-			this.DefaultHeight = 400;
-			this.current_matches = new Dictionary<string, int> ();
-			this.Resizable = true;
+			IconName = "tomboy";
+			DefaultWidth = 450;
+			DefaultHeight = 400;
+			current_matches = [];
+			Resizable = true;
 
-			selected_tags = new Dictionary<Tag, Tag> ();
+			selected_tags = [];
 
 			AddAccelGroup (Tomboy.ActionManager.UI.AccelGroup);
 
 			menu_bar = CreateMenuBar ();
 
-			Gtk.Label label = new Gtk.Label (Catalog.GetString ("_Search:"));
-			label.Xalign = 0.0f;
+            Label label = new(Catalog.GetString("_Search:"))
+            {
+                Xalign = 0.0f
+            };
 
-			find_combo = Gtk.ComboBoxEntry.NewText ();
+            find_combo = ComboBoxText.NewWithEntry ();
 			label.MnemonicWidget = find_combo;
 			find_combo.Changed += OnEntryChanged;
 			find_combo.Entry.ActivatesDefault = false;
@@ -112,43 +139,44 @@ namespace Tomboy
 				}
 			}
 
-			clear_search_button = new Gtk.Button (new Gtk.Image (Gtk.Stock.Clear,
-							      Gtk.IconSize.Menu));
-			clear_search_button.Sensitive = false;
-			clear_search_button.Clicked += ClearSearchClicked;
+            clear_search_button = new Button(new Image(Stock.Clear,
+                                  IconSize.Menu))
+            {
+                Sensitive = false
+            };
+            clear_search_button.Clicked += ClearSearchClicked;
 			clear_search_button.Show ();
 
-			Gtk.Table table = new Gtk.Table (1, 3, false);
+			Table table = new Table (1, 3, false);
 			table.Attach (label, 0, 1, 0, 1,
-			              Gtk.AttachOptions.Fill,
-			              Gtk.AttachOptions.Expand | Gtk.AttachOptions.Fill,
+			              AttachOptions.Fill,
+			              AttachOptions.Expand | AttachOptions.Fill,
 			              0, 0);
 			table.Attach (find_combo, 1, 2, 0, 1,
-			              Gtk.AttachOptions.Expand | Gtk.AttachOptions.Fill,
-			              Gtk.AttachOptions.Expand | Gtk.AttachOptions.Fill,
+			              AttachOptions.Expand | AttachOptions.Fill,
+			              AttachOptions.Expand | AttachOptions.Fill,
 			              0, 0);
 			table.Attach (clear_search_button,
 				      2, 3, 0, 1,
-			              Gtk.AttachOptions.Fill,
-			              Gtk.AttachOptions.Expand | Gtk.AttachOptions.Fill,
+			              AttachOptions.Fill,
+			              AttachOptions.Expand | AttachOptions.Fill,
 			              0, 0);
 			table.ColumnSpacing = 4;
 			table.ShowAll ();
 
-			Gtk.HBox hbox = new Gtk.HBox (false, 0);
+			HBox hbox = new HBox (false, 0);
 			hbox.PackStart (table, true, true, 0);
 			hbox.ShowAll ();
 
 			// Notebooks Pane
-			Gtk.Widget notebooksPane = MakeNotebooksPane ();
+			Widget notebooksPane = MakeNotebooksPane ();
 			notebooksPane.Show ();
 
 			MakeRecentTree ();
 			tree.Show ();
 
-			status_bar = new Gtk.Statusbar ();
-			status_bar.HasResizeGrip = true;
-			status_bar.Show ();
+            status_bar = [];	
+            status_bar.Show ();
 
 			// Update on changes to notes
 			manager.NoteDeleted += OnNotesDeleted;
@@ -159,15 +187,17 @@ namespace Tomboy
 			// List all the current notes
 			UpdateResults ();
 
-			matches_window = new Gtk.ScrolledWindow ();
-			matches_window.ShadowType = Gtk.ShadowType.In;
+            matches_window = new ScrolledWindow
+            {
+                ShadowType = ShadowType.In,
 
-			matches_window.HscrollbarPolicy = Gtk.PolicyType.Automatic;
-			matches_window.VscrollbarPolicy = Gtk.PolicyType.Automatic;
-			matches_window.Add (tree);
+                HscrollbarPolicy = PolicyType.Automatic,
+                VscrollbarPolicy = PolicyType.Automatic
+            };
+            matches_window.Add (tree);
 			matches_window.Show ();
 
-			hpaned = new Gtk.HPaned ();
+			hpaned = new HPaned ();
 			hpaned.Position = 150;
 			hpaned.Add1 (notebooksPane);
 			hpaned.Add2 (matches_window);
@@ -175,7 +205,7 @@ namespace Tomboy
 
 			RestorePosition ();
 
-			Gtk.VBox vbox = new Gtk.VBox (false, 8);
+			VBox vbox = new VBox (false, 8);
 			vbox.BorderWidth = 6;
 			vbox.PackStart (hbox, false, false, 4);
 			vbox.PackStart (hpaned, true, true, 0);
@@ -184,16 +214,16 @@ namespace Tomboy
 
 			// Use another VBox to place the MenuBar
 			// right at thetop of the window.
-			content_vbox = new Gtk.VBox (false, 0);
+			content_vbox = new VBox (false, 0);
 #if !MAC
 			content_vbox.PackStart (menu_bar, false, false, 0);
 #endif
 			content_vbox.PackStart (vbox, true, true, 0);
 			content_vbox.Show ();
 
-			this.Add (content_vbox);
-			this.DeleteEvent += OnDelete;
-			this.KeyPressEvent += OnKeyPressed; // For Escape
+			Add (content_vbox);
+			DeleteEvent += OnDelete;
+			KeyPressEvent += OnKeyPressed; // For Escape
 
 			// Watch when notes are added to notebooks so the search
 			// results will be updated immediately instead of waiting
@@ -202,27 +232,20 @@ namespace Tomboy
 			Notebooks.NotebookManager.NoteRemovedFromNotebook += OnNoteRemovedFromNotebook;
 			
 			// Set the focus chain for the top-most containers Bug #512175
-			Gtk.Widget[] vbox_focus = new Gtk.Widget[2];
-			vbox_focus[0] = hbox;
-			vbox_focus[1] = hpaned;
-			vbox.FocusChain = vbox_focus;
+			Widget[] vbox_focus = [hbox, hpaned];
+            vbox.FocusChain = vbox_focus;
 
 			// Set focus chain for sub widgits of first top-most container
-			Gtk.Widget[] table_focus = new Gtk.Widget[2];
-			table_focus[0] = find_combo;
-			table_focus[1] = matches_window;
-			hbox.FocusChain = table_focus;
+			Widget[] table_focus = [find_combo, matches_window];
+            hbox.FocusChain = table_focus;
 			
 			// set focus chain for sub widgits of seconf top-most container
-			Gtk.Widget[] hpaned_focus = new Gtk.Widget[2];
-			hpaned_focus[0] = matches_window;
-			hpaned_focus[1] = notebooksPane;
-			hpaned.FocusChain = hpaned_focus;
+			Widget[] hpaned_focus = [matches_window, notebooksPane];
+            hpaned.FocusChain = hpaned_focus;
 			
 			// get back to the beginning of the focus chain
-			Gtk.Widget[] scroll_right = new Gtk.Widget[1];
-			scroll_right[0] = tree;
-			matches_window.FocusChain = scroll_right;
+			Widget[] scroll_right = [tree];
+            matches_window.FocusChain = scroll_right;
 			
 			Tomboy.ExitingEvent += OnExitingEvent;
 		}
@@ -543,33 +566,35 @@ namespace Tomboy
 			store_sort.SetSortColumnId (2, Gtk.SortType.Descending);
 		}
 
-		void MatchesColumnDataFunc (Gtk.TreeViewColumn column,
-					    Gtk.CellRenderer cell,
-					    Gtk.TreeModel model,
-					    Gtk.TreeIter iter)
+		void MatchesColumnDataFunc (TreeViewColumn column,
+									CellRenderer cell,
+									ITreeModel model,
+									TreeIter iter)
 		{
-			Gtk.CellRendererText crt = cell as Gtk.CellRendererText;
-			if (crt == null)
-				return;
+            if (cell is not CellRendererText crt)
+                return;
 
-			string match_str = "";
+            string match_str = "";
 
 			Note note = (Note) model.GetValue (iter, 3 /* note */);
 			if (note != null) {
-				int match_count;
-				if (current_matches.TryGetValue (note.Uri, out match_count)) {
-					if (match_count == int.MaxValue) {
-						match_str = string.Format (
-								    Catalog.GetString ("Title match"));
-					} else if (match_count > 0) {
-						match_str = string.Format (
-								    Catalog.GetPluralString ("{0} match",
-											     "{0} matches",
-											     match_count),
-								    match_count);
-					}
-				}
-			}
+                if (current_matches.TryGetValue(note.Uri, out int match_count))
+                {
+                    if (match_count == int.MaxValue)
+                    {
+                        match_str = string.Format(
+                                    Catalog.GetString("Title match"));
+                    }
+                    else if (match_count > 0)
+                    {
+                        match_str = string.Format(
+                                    Catalog.GetPluralString("{0} match",
+                                                 "{0} matches",
+                                                 match_count),
+                                    match_count);
+                    }
+                }
+            }
 
 			crt.Text = match_str;
 		}
@@ -600,20 +625,32 @@ namespace Tomboy
 		void NoMatchesFoundAction ()
 		{
 			hpaned.Remove (matches_window);
-			String message = Catalog.GetString ("No results found " +
+            string message = Catalog.GetString ("No results found " +
 				"in the selected notebook.\nClick here to " +
 				"search across all notes.");
-			Gtk.LinkButton link_button = new Gtk.LinkButton ("", message);
-			Gtk.LinkButton.SetUriHook(ShowAllSearchResults);
+			LinkButton link_button = new("", message);
+			// LinkButton.SetUriHook(ShowAllSearchResults);
+
+			// GObjectInterop.g_signal_connect_data(
+			// 	link_button.Handle,
+			// 	"clicked",
+			// 	new ClickedDelegate(OnClicked),
+			// 	IntPtr.Zero,
+			// 	IntPtr.Zero,
+			// 	GObjectInterop.GConnectFlags.None
+			// );
+
 			link_button.TooltipText = Catalog.GetString 
 				("Click here to search across all notebooks");
+			link_button.Clicked += (sender, e) => ShowAllSearchResults();
 			link_button.Show();
-			Gtk.Table no_matches_found_table = new Gtk.Table (1, 3, false);
-			no_matches_found_table.Attach (link_button, 1, 2, 0, 1,
-			                               Gtk.AttachOptions.Fill | Gtk.AttachOptions.Shrink,
-			                 Gtk.AttachOptions.Shrink,
-			                0, 0
-			              );
+			Table no_matches_found_table = new Table (1, 3, false);
+			no_matches_found_table.Attach (
+									link_button, 1, 2, 0, 1,
+			                        AttachOptions.Fill | AttachOptions.Shrink,
+			                 		AttachOptions.Shrink,
+			                		0, 0
+			              			);
 			
 			no_matches_found_table.ColumnSpacing = 4;
 			no_matches_found_table.ShowAll ();
@@ -622,38 +659,36 @@ namespace Tomboy
 			no_matches_box.Show ();
 			hpaned.Add2 (no_matches_box);
 		}
-		
-		void RestoreMatchesWindow ()
+
+		void RestoreMatchesWindow()
 		{
 			if (no_matches_box != null) {
-				hpaned.Remove (no_matches_box);
-				hpaned.Add2 (matches_window);
+				hpaned.Remove(no_matches_box);
+				hpaned.Add2(matches_window);
 				no_matches_box = null;
 				RestorePosition();
-			}	
+			}
 		}
 		
-		private void ShowAllSearchResults (Gtk.LinkButton button, String param)
+//		private void ShowAllSearchResults (LinkButton button, string param)
+		private void ShowAllSearchResults()
 		{
-			TreeIter iter;
-			notebooksTree.Model.GetIterFirst (out iter);
-			notebooksTree.Selection.SelectIter (iter);
+            notebooksTree.Model.GetIterFirst(out TreeIter iter);
+            notebooksTree.Selection.SelectIter (iter);
 		}		
-		
 
 		/// <summary>
 		/// Filter out notes based on the current search string
 		/// and selected tags.  Also prevent template notes from
 		/// appearing.
 		/// </summary>
-		bool FilterNotes (Gtk.TreeModel model, Gtk.TreeIter iter)
+		bool FilterNotes (ITreeModel model, TreeIter iter)
 		{
-			Note note = model.GetValue (iter, 3 /* note */) as Note;
-			if (note == null)
-				return false;
+            if (model.GetValue(iter, 3 /* note */) is not Note note)
+                return false;
 
-			// Don't show the template notes in the list
-			Tag template_tag = TagManager.GetOrCreateSystemTag (TagManager.TemplateNoteSystemTag);
+            // Don't show the template notes in the list
+            Tag template_tag = TagManager.GetOrCreateSystemTag (TagManager.TemplateNoteSystemTag);
 			if (note.ContainsTag (template_tag))
 				return false;
 
@@ -677,7 +712,7 @@ namespace Tomboy
 		       // return true;
 		}
 
-		bool FilterTags (Gtk.TreeModel model, Gtk.TreeIter iter)
+		bool FilterTags (ITreeModel model, TreeIter iter)
 		{
 			Tag t = model.GetValue (iter, 0 /* note */) as Tag;
 			if(t.IsProperty || t.IsSystem)
@@ -820,27 +855,25 @@ namespace Tomboy
 		}
 
 		[GLib.ConnectBefore]
-		void OnTreeViewButtonPressed (object sender, Gtk.ButtonPressEventArgs args)
+		void OnTreeViewButtonPressed (object sender, ButtonPressEventArgs args)
 		{
-			if (args.Event.Window != this.tree.BinWindow) {
+			if (args.Event.Window != tree.BinWindow) {
 				return;
 			}
 
-			Gtk.TreePath path = null;
-			Gtk.TreeViewColumn column = null;
 
-			tree.GetPathAtPos ((int)args.Event.X, (int)args.Event.Y,
-							   out path, out column);
-			if (path == null)
+            tree.GetPathAtPos((int)args.Event.X, (int)args.Event.Y,
+                               out TreePath path, out TreeViewColumn column);
+            if (path == null)
 				return;
 
 			clickX = (int)args.Event.X;
 			clickY = (int)args.Event.Y;
 
 			switch (args.Event.Type) {
-			case Gdk.EventType.TwoButtonPress:
+			case EventType.TwoButtonPress:
 				if (args.Event.Button != 1 || (args.Event.State &
-						(Gdk.ModifierType.ControlMask | Gdk.ModifierType.ShiftMask)) != 0) {
+						(ModifierType.ControlMask | ModifierType.ShiftMask)) != 0) {
 					break;
 				}
 
@@ -848,10 +881,10 @@ namespace Tomboy
 				tree.Selection.SelectPath (path);
 				tree.ActivateRow (path, column);
 				break;
-			case Gdk.EventType.ButtonPress:
+			case EventType.ButtonPress:
 				if (args.Event.Button == 3) {
-					Gtk.Menu menu = Tomboy.ActionManager.GetWidget (
-						"/MainWindowContextMenu") as Gtk.Menu;
+					Menu menu = Tomboy.ActionManager.GetWidget (
+						"/MainWindowContextMenu") as Menu;
 					PopupContextMenuAtLocation (menu,
 						(int)args.Event.X,
 						(int)args.Event.Y);
@@ -864,9 +897,9 @@ namespace Tomboy
 				}
 
 				if (tree.Selection.PathIsSelected (path) && (args.Event.State &
-						(Gdk.ModifierType.ControlMask | Gdk.ModifierType.ShiftMask)) == 0) {
+						(ModifierType.ControlMask | ModifierType.ShiftMask)) == 0) {
 					if (column != null && args.Event.Button == 1) {
-						Gtk.CellRenderer renderer = column.CellRenderers [0];
+						CellRenderer renderer = column.Cells [0];
 						Gdk.Rectangle background_area = tree.GetBackgroundArea (path, column);
 						Gdk.Rectangle cell_area = tree.GetCellArea (path, column);
 
@@ -1045,12 +1078,10 @@ namespace Tomboy
 
 		List<Note> GetSelectedNotes ()
 		{
-			Gtk.TreeModel model;
-			List<Note> selected_notes = new List<Note> ();
-
-			Gtk.TreePath [] selected_rows =
-				tree.Selection.GetSelectedRows (out model);
-			foreach (Gtk.TreePath path in selected_rows) {
+            List<Note> selected_notes = [];
+            TreePath[] selected_rows =
+				tree.Selection.GetSelectedRows (out _);
+			foreach (TreePath path in selected_rows) {
 				Note note = GetNote (path);
 				if (note == null)
 					continue;
@@ -1157,18 +1188,16 @@ namespace Tomboy
 			base.OnShown ();
 		}
 
-		int CompareTitles (Gtk.TreeModel model, Gtk.TreeIter a, Gtk.TreeIter b)
+		int CompareTitles (ITreeModel model, TreeIter a, TreeIter b)
 		{
-			string title_a = model.GetValue (a, 1 /* title */) as string;
-			string title_b = model.GetValue (b, 1 /* title */) as string;
+            if (model.GetValue(a, 1 /* title */) is not string title_a ||
+				model.GetValue(b, 1 /* title */) is not string title_b)
+                return -1;
 
-			if (title_a == null || title_b == null)
-				return -1;
-
-			return title_a.CompareTo (title_b);
+            return title_a.CompareTo (title_b);
 		}
 
-		int CompareDates (Gtk.TreeModel model, Gtk.TreeIter a, Gtk.TreeIter b)
+		int CompareDates (ITreeModel model, TreeIter a, TreeIter b)
 		{
 			Note note_a = (Note) model.GetValue (a, 3 /* note */);
 			Note note_b = (Note) model.GetValue (b, 3 /* note */);
@@ -1179,19 +1208,16 @@ namespace Tomboy
 				return DateTime.Compare (note_a.ChangeDate, note_b.ChangeDate);
 		}
 
-		int CompareSearchHits (Gtk.TreeModel model, Gtk.TreeIter a, Gtk.TreeIter b)
+		int CompareSearchHits (ITreeModel model, TreeIter a, TreeIter b)
 		{
-			Note note_a = model.GetValue (a, 3 /* note */) as Note;
-			Note note_b = model.GetValue (b, 3 /* note */) as Note;
+            if (model.GetValue(a, 3 /* note */) is not Note note_a ||
+				model.GetValue(b, 3 /* note */) is not Note note_b)
+            {
+                return -1;
+            }
 
-			if (note_a == null || note_b == null) {
-				return -1;
-			}
-
-			int matches_a;
-			int matches_b;
-			bool has_matches_a = current_matches.TryGetValue (note_a.Uri, out matches_a);
-			bool has_matches_b = current_matches.TryGetValue (note_b.Uri, out matches_b);
+            bool has_matches_a = current_matches.TryGetValue(note_a.Uri, out int matches_a);
+            bool has_matches_b = current_matches.TryGetValue (note_b.Uri, out int matches_b);
 
 			if (!has_matches_a || !has_matches_b) {
 				if (has_matches_a)
@@ -1207,18 +1233,15 @@ namespace Tomboy
 
 				// Make sure to always sort alphabetically
 				if (result != 0) {
-					int sort_col_id;
-					Gtk.SortType sort_type;
-					if (store_sort.GetSortColumnId (out sort_col_id,
-									out sort_type)) {
-						if (sort_type == Gtk.SortType.Descending)
-							result = result * -1; // reverse sign
-					}
-				}
-
+                    if (store_sort.GetSortColumnId(out _,
+                                    			   out SortType sort_type))
+                    {
+                        if (sort_type == SortType.Descending)
+                            result *= -1; // reverse sign
+                    }
+                }
 				return result;
 			}
-
 			return result;
 		}
 
@@ -1314,15 +1337,14 @@ namespace Tomboy
 			find_combo.Entry.GrabFocus ();
 		}
 
-		private void NotebookPixbufCellDataFunc (Gtk.TreeViewColumn treeColumn,
-				Gtk.CellRenderer renderer, Gtk.TreeModel model,
-				Gtk.TreeIter iter)
+		private void NotebookPixbufCellDataFunc (TreeViewColumn treeColumn,
+									CellRenderer renderer, ITreeModel model,
+									TreeIter iter)
 		{
-			Notebooks.Notebook notebook = model.GetValue (iter, 0) as Notebooks.Notebook;
-			if (notebook == null)
-				return;
+            if (model.GetValue(iter, 0) is not Notebooks.Notebook notebook)
+                return;
 
-			Gtk.CellRendererPixbuf crp = renderer as Gtk.CellRendererPixbuf;
+            CellRendererPixbuf crp = renderer as CellRendererPixbuf;
 			if (notebook is Notebooks.AllNotesNotebook) {
 				crp.Pixbuf = all_notes_icon;
 			} else if (notebook is Notebooks.UnfiledNotesNotebook) {
@@ -1332,19 +1354,19 @@ namespace Tomboy
 			}
 		}
 
-		private void NotebookTextCellDataFunc (Gtk.TreeViewColumn treeColumn,
-				Gtk.CellRenderer renderer, Gtk.TreeModel model,
-				Gtk.TreeIter iter)
+		private void NotebookTextCellDataFunc (TreeViewColumn treeColumn,
+									CellRenderer renderer, ITreeModel model,
+									TreeIter iter)
 		{
-			Gtk.CellRendererText crt = renderer as Gtk.CellRendererText;
+			CellRendererText crt = renderer as CellRendererText;
 			crt.Ellipsize = Pango.EllipsizeMode.End;
-			Notebooks.Notebook notebook = model.GetValue (iter, 0) as Notebooks.Notebook;
-			if (notebook == null) {
-				crt.Text = String.Empty;
-				return;
-			}
+            if (model.GetValue(iter, 0) is not Notebooks.Notebook notebook)
+            {
+                crt.Text = string.Empty;
+                return;
+            }
 
-			crt.Text = notebook.Name;
+            crt.Text = notebook.Name;
 
 			if (notebook is Notebooks.SpecialNotebook) {
 				// Bold the "Special" Notebooks
@@ -1451,11 +1473,10 @@ namespace Tomboy
 		/// </returns>
 		public Notebooks.Notebook GetSelectedNotebook ()
 		{
-			Gtk.TreeModel model;
-			Gtk.TreeIter iter;
 
-			Gtk.TreeSelection selection = notebooksTree.Selection;
-			if (selection == null || selection.GetSelected (out model, out iter) == false)
+            TreeSelection selection = notebooksTree.Selection;
+            if (selection == null ||
+				selection.GetSelected (out ITreeModel model, out TreeIter iter) == false)
 				return null; // Nothing selected
 
 			return model.GetValue (iter, 0) as Notebooks.Notebook;

@@ -1,4 +1,3 @@
-
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -90,6 +89,7 @@ namespace Tomboy
 
 		public void Initialize ()
 		{
+			Logger.Debug ("Initializing NoteManager...");
 			notes = new List<Note> ();
 
 			string conf_dir = Services.NativeApplication.ConfigurationDirectory;
