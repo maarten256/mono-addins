@@ -10,7 +10,6 @@ using System.Xml;
 
 using Tomboy.Compat;
 using System.Threading.Tasks;
-using DBus.Protocol;
 
 namespace Tomboy
 {
@@ -173,6 +172,19 @@ namespace Tomboy
 			catch (Exception e)
 			{
 				Logger.Debug("Failed on Gdk.PixBuf: {0}", e.Message);
+			}
+
+			try
+			{
+				string iconDir = Path.Combine(Defines.DATADIR, "icons");
+				string iconPath = Path.Combine(iconDir, resource_name + ".png");
+				Gdk.Pixbuf ret = new Gdk.Pixbuf(iconPath);
+				return ret.ScaleSimple(size, size, Gdk.InterpType.Bilinear);
+			}
+			catch (ArgumentException) { }
+			catch (Exception e)
+			{
+				Logger.Debug("Failed on Gdk.PixBuf with PNG: {0}", e.Message);
 			}
 
 			Logger.Debug("Unable to load icon '{0}'.", resource_name);

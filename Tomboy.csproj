@@ -119,8 +119,8 @@
     <PackageReference Include="Tmds.DBus" Version="0.21.2" />
   </ItemGroup>
 
-<!--  <Target Name="AddRuntimeScaffolding" AfterTargets="Build">
-    <ItemGroup>
+  <Target Name="AddRuntimeScaffolding" AfterTargets="Build">
+<!--    <ItemGroup>
       <RuntimeSharedObjects Include="/usr/lib/x86_64-linux-gnu/libgdk_pixbuf-2.0.so" />
       <RuntimeSharedObjects Include="/usr/lib/x86_64-linux-gnu/libglib-2.0.so" />
       <RuntimeSharedObjects Include="/usr/lib/x86_64-linux-gnu/libgobject-2.0.so" />
@@ -145,6 +145,15 @@
     <Copy SourceFiles="/source/tomboy/stage/lib/tomboy/libtomboy.so"
           DestinationFiles="$(OutputPath)/runtimes/linux-x64/native/libtomboy.so"
           SkipUnchangedFiles="true" />
-  </Target>
 -->
+    <ItemGroup>
+      <Icons Include="data/icons/*.png" />
+      <Icons Include="data/icons/*.ico" />
+    </ItemGroup>
+    <Copy SourceFiles="@(Icons)"
+          DestinationFolder="$(BaseOutputPath)/share/icons"
+          SkipUnchangedFiles="true"
+          Retries="2"
+          RetryDelayMilliseconds="500" />
+  </Target>
 </Project>

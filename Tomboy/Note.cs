@@ -399,6 +399,7 @@ namespace Tomboy
 
 		Note (NoteData data, string filepath, NoteManager manager)
 		{
+			Logger.Debug ("Actually constructing a note...");
 			this.data = new NoteDataBufferSynchronizer (data);
 			this.filepath = filepath;
 			this.manager = manager;
@@ -455,6 +456,7 @@ namespace Tomboy
 		                                  string filepath,
 		                                  NoteManager manager)
 		{
+			Logger.Debug ("Creating new note (5)...");
 			NoteData data = new NoteData (UrlFromPath (filepath));
 			data.Title = title;
 			data.CreateDate = DateTime.Now;

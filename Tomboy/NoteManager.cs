@@ -473,6 +473,7 @@ Ciao!");
 		// Create a new note with a generated title
 		public Note Create ()
 		{
+			Logger.Debug ("Creating new note (1)...");
 			int new_num = notes.Count;
 			string temp_title;
 
@@ -513,7 +514,9 @@ Ciao!");
 
 		public Note Create (string title)
 		{
-			return CreateNewNote (title, null);
+			Logger.Debug ("Creating new note (2)...");
+
+			return CreateNewNote(title, null);
 		}
 
 		public Note Create (string title, string xml_content)
@@ -543,6 +546,7 @@ Ciao!");
 		// it to title.
 		private Note CreateNewNote (string title, string guid)
 		{
+			Logger.Debug ("Creating new note (3)...");
 			string body = null;
 
 			title = SplitTitleFromContent (title, out body);
@@ -578,6 +582,7 @@ Ciao!");
 		// Create a new note with the specified Xml content
 		private Note CreateNewNote (string title, string xml_content, string guid)
 		{
+			Logger.Debug ("Creating new note (4)...");
 			if (title == null || title == string.Empty)
 				throw new Exception ("Invalid title");
 

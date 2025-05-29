@@ -214,18 +214,24 @@ namespace Tomboy
 
 		public void LoadAddinsForNote (Note note)
 		{
+			Logger.Debug ("Loading NoteAddins for note: {0}", note.Title);
 			Mono.Addins.ExtensionNodeList list = Mono.Addins.AddinManager.GetExtensionNodes ("/Tomboy/NoteAddins");
-			foreach (Mono.Addins.ExtensionNode node in list) {
+			Logger.Debug ("Found {0} NoteAddins", list.Count);
+			foreach (Mono.Addins.ExtensionNode node in list)
+			{
 				Mono.Addins.TypeExtensionNode type_node =
-				        node as Mono.Addins.TypeExtensionNode;
+						node as Mono.Addins.TypeExtensionNode;
 
-				try {
-					NoteAddin n_addin = type_node.CreateInstance () as NoteAddin;
+				try
+				{
+					NoteAddin n_addin = type_node.CreateInstance() as NoteAddin;
 
 					// Keep track of the addins added to each note
-					AttachAddin (type_node.Id, note, n_addin);
-				} catch (Exception e) {
-					Logger.Warn ("Couldn't create a NoteAddin instance: {0}", e.Message);
+					AttachAddin(type_node.Id, note, n_addin);
+				}
+				catch (Exception e)
+				{
+					Logger.Warn("Couldn't create a NoteAddin instance: {0}", e.Message);
 				}
 			}
 

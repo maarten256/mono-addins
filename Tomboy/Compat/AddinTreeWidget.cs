@@ -74,17 +74,17 @@ namespace Tomboy.Compat
 		const int ColImage = 6;
 		const int ColShowImage = 7;
 
-		public CompatAddinTreeWidget(Gtk.TreeView treeView)
+		public CompatAddinTreeWidget(TreeView treeView)
 		{
-			iconInstalled = Gdk.Pixbuf.LoadFromResource("plugin-32.png");
-			updateOverlay = Gdk.Pixbuf.LoadFromResource("update-available-overlay-16.png");
-			installedOverlay = Gdk.Pixbuf.LoadFromResource("installed-overlay-16.png");
+			iconInstalled = GuiUtils.GetIcon("plugin-32", 32);
+			updateOverlay = GuiUtils.GetIcon("software-update-available-overlay", 32);
+			installedOverlay = GuiUtils.GetIcon("installed-overlay", 32);
 
 			this.treeView = treeView;
-			ArrayList list = new ArrayList();
+			ArrayList list = [];
 			AddStoreTypes(list);
 			Type[] types = (Type[])list.ToArray(typeof(Type));
-			treeStore = new Gtk.TreeStore(types);
+			treeStore = new TreeStore(types);
 			treeView.Model = treeStore;
 			CreateColumns();
 			ShowCategories = true;

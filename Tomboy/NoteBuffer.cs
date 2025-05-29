@@ -54,11 +54,22 @@ namespace Tomboy
 		private static bool text_buffer_serialize_func_fixed = typeof(Gtk.TextBufferSerializeFunc).GetMethod ("Invoke").ReturnType == typeof(byte[]);
 
 		public NoteBuffer (Gtk.TextTagTable tags, Note note)
-: base (tags)
+		: base (tags)
 		{
+			Logger.Debug("Constructing NoteBuffer with Note: {0}", note.Title);
 			// Ensure Gtk# has the fix for BNC #555495
-			if (text_buffer_serialize_func_fixed) {
-				RegisterSerializeFormat ("text/html", (Gtk.TextBufferSerializeFunc) Delegate.CreateDelegate (typeof(Gtk.TextBufferSerializeFunc), this, "SerializeToHtml"));
+			if (text_buffer_serialize_func_fixed)
+			{
+				try
+				{
+					RegisterSerializeFormat("text/html",
+							(Gtk.TextBufferSerializeFunc)Delegate.CreateDelegate(typeof(Gtk.TextBufferSerializeFunc),
+							this, "SerializeToHtml"));
+				}
+				catch (Exception e)
+				{
+					Logger.Error("Failed to register text/html serialization: {0}", e);
+				}
 			}
 
 			active_tags = new List<Gtk.TextTag> ();

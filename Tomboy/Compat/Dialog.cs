@@ -19,7 +19,6 @@ namespace Tomboy.Compat
                         "GtkDialog",
                         [
                             "use-header-bar", false,
-                            "transient-for", parent.Handle,
                             "modal", flags.HasFlag(DialogFlags.Modal),
                             "destroy-with-parent", flags.HasFlag(DialogFlags.DestroyWithParent)
                         ]
@@ -59,7 +58,9 @@ namespace Tomboy.Compat
                     gvalues[i] = new GLib.Value(properties[i * 2 + 1]);
                 }
 
-                IntPtr gtype = GObjectInterop.g_type_from_name(gtypeName);
+                // IntPtr gtype = GObjectInterop.g_type_from_name(gtypeName);
+                GLib.GType gtypeStruct = GLib.GType.FromName("GtkDialog");
+                IntPtr gtype = gtypeStruct.Val;
                 if (gtype == IntPtr.Zero)
                     throw new ArgumentException($"Unknown GType name: {gtypeName}");
 

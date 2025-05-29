@@ -281,20 +281,24 @@ namespace Tomboy
 
 		static void OnNewNoteAction (object sender, EventArgs args)
 		{
-			try {
-				Note new_note = manager.Create ();
-				new_note.Window.Show ();
-			} catch (Exception e) {
+			Logger.Debug ("OnNewNoteAction called");
+			try
+			{
+				Note new_note = manager.Create();
+				new_note.Window.Show();
+			}
+			catch (Exception e)
+			{
 				HIGMessageDialog dialog =
-				        new HIGMessageDialog (
-				        null,
-				        0,
-				        Gtk.MessageType.Error,
-				        Gtk.ButtonsType.Ok,
-				        Catalog.GetString ("Cannot create new note"),
-				        e.Message);
-				dialog.Run ();
-				dialog.Destroy ();
+						new HIGMessageDialog(
+						null,
+						0,
+						Gtk.MessageType.Error,
+						Gtk.ButtonsType.Ok,
+						Catalog.GetString("Cannot create new note"),
+						e.Message);
+				dialog.Run();
+				dialog.Destroy();
 			}
 		}
 
