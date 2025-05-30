@@ -4,8 +4,9 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mono.Addins", "Mono.Addins\Mono.Addins.csproj", "{F8A3AB5E-2F23-4F5D-95D6-44EAE92187F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mono.Addins.Setup", "Mono.Addins.Setup\Mono.Addins.Setup.csproj", "{C47BA105-AFD3-4D6D-9021-3977A723ABCD}"
-EndProject
+# TODO: Add this back in
+# Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mono.Addins.Setup", "Mono.Addins.Setup\Mono.Addins.Setup.csproj", "{C47BA105-AFD3-4D6D-9021-3977A723ABCD}"
+# EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
