@@ -90,7 +90,6 @@ Makefile.in
 /Tomboy/Addins/*/*.dll.mdb
 /Tomboy/Addins/*/*.pidb
 /Tomboy/Addins/*/obj/
-/Tomboy/Defines.cs
 /Tomboy/tomboy-panel
 /Tomboy/*.exe
 /Tomboy/*.exe.config
@@ -104,3 +103,7 @@ Makefile.in
 *.code-workspace
 /lib
 /build
+**/build
+/obj
+**/obj/
+**/bin/

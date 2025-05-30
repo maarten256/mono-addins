@@ -19,7 +19,7 @@
     <PublishTrimmed>true</PublishTrimmed>
     <StripSymbols>false</StripSymbols>
 
-    <BaseOutputPath>$(MSBuildProjectDirectory)/build</BaseOutputPath>
+    <BaseOutputPath>$(TomboyOutputDir)</BaseOutputPath>
     <OutputPath>$(BaseOutputPath)/bin</OutputPath>
     <IntermediateOutputPath>$(BaseOutputPath)/obj</IntermediateOutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -120,7 +120,7 @@
   </ItemGroup>
 
   <Target Name="AddRuntimeScaffolding" AfterTargets="Build">
-<!--    <ItemGroup>
+    <ItemGroup>
       <RuntimeSharedObjects Include="/usr/lib/x86_64-linux-gnu/libgdk_pixbuf-2.0.so" />
       <RuntimeSharedObjects Include="/usr/lib/x86_64-linux-gnu/libglib-2.0.so" />
       <RuntimeSharedObjects Include="/usr/lib/x86_64-linux-gnu/libgobject-2.0.so" />
@@ -130,7 +130,7 @@
           SkipUnchangedFiles="true"
           Retries="2"
           RetryDelayMilliseconds="500" />
-
+<!--
     <ItemGroup>
       <RuntimeDynamicLinkLibraries Include="lib/*" />
     </ItemGroup>
@@ -142,10 +142,13 @@
     <Copy SourceFiles="/usr/lib/x86_64-linux-gnu/libgtk-x11-2.0.so"
           DestinationFiles="$(OutputPath)/runtimes/linux-x64/native/libgtk-win32-2.0-0.dll"
           SkipUnchangedFiles="true" />
-    <Copy SourceFiles="/source/tomboy/stage/lib/tomboy/libtomboy.so"
+-->
+    <Copy SourceFiles="/source/tomboy-modern/libtomboy/libtomboy.so"
           DestinationFiles="$(OutputPath)/runtimes/linux-x64/native/libtomboy.so"
           SkipUnchangedFiles="true" />
--->
+    
+    <Exec Command="ln -f Tomboy.dll Tomboy.exe" WorkingDirectory="$(OutputPath)" />
+
     <ItemGroup>
       <Icons Include="data/icons/*.png" />
       <Icons Include="data/icons/*.ico" />

@@ -267,6 +267,8 @@ tomboy_keybinder_bind (const char           *keystring,
 	Binding *binding;
 	gboolean success;
 
+	TRACE (g_print ("In tomboy_keybinder_bind: '%s'\n", keystring));
+	
 	binding = g_new0 (Binding, 1);
 	binding->keystring = g_strdup (keystring);
 	binding->handler = handler;

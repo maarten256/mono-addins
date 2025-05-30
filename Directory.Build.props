@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <TomboyOutputDir>$(MSBuildThisFileDirectory)build\</TomboyOutputDir>
+  </PropertyGroup>
+</Project>

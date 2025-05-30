@@ -1,0 +1,52 @@
+5/30/2025 1:37:09 AM [DEBUG] Tomboy.cs:85 (Main): In Main(): About to initialize...
+5/30/2025 1:37:09 AM [DEBUG] Utils.cs:1162 (Initialize): In Application::Initialize(): Initializing Tomboy application
+5/30/2025 1:37:09 AM [DEBUG]: In GnomeApplication::Initialize(): Initializing GnomeApplication with display name: Tomboy
+5/30/2025 1:37:09 AM [DEBUG] GnomeApplication.cs:221 (InitializeAsync): In GnomeApplication::InitializeAsync()
+5/30/2025 1:37:09 AM [DEBUG] GnomeApplication.cs:246 (InitializeAsync): Failed to register with session manager: org.freedesktop.DBus.Error.ServiceUnknown: The name org.gnome.SessionManager was not provided by any .service files
+5/30/2025 1:37:09 AM [DEBUG] GnomeApplication.cs:63 (Initialize): In GnomeApplication::Initialize(): Initializing Gtk
+5/30/2025 1:37:11 AM [DEBUG] GnomeApplication.cs:65 (Initialize): In GnomeApplication::Initialize(): Gtk initialized
+5/30/2025 1:37:11 AM [DEBUG] Utils.cs:1165 (Initialize): In Application::Initialize(): Loading action manager
+5/30/2025 1:37:11 AM [DEBUG] ActionManager.cs:52 (.ctor): Initializing ActionManager
+5/30/2025 1:37:11 AM [DEBUG] ActionManager.cs:126 (PopulateActionGroups): Populating Global Actions
+5/30/2025 1:37:11 AM [DEBUG] Tomboy.cs:105 (Main): Creating NoteManager...
+5/30/2025 1:37:11 AM [DEBUG]: NoteManager created with note path ".local/share/tomboy".
+5/30/2025 1:37:11 AM [DEBUG] Tomboy.cs:111 (Main): Calling SetupGlobalActions...
+5/30/2025 1:37:11 AM [DEBUG] Tomboy.cs:115 (Main): Global actions set up. Setting timer...
+5/30/2025 1:37:11 AM [DEBUG] Tomboy.cs:236 (StartTrayIcon): Starting Tray Icon...
+5/30/2025 1:37:12 AM [DEBUG] Tray.cs:149 (.ctor): Constructing TomboyTrayIcon
+5/30/2025 1:37:12 AM [DEBUG] XKeybinder.cs:32 (.ctor): Constructing XKeybinder
+5/30/2025 1:37:12 AM [DEBUG] Tray.cs:392 (.ctor): Constructing Tray
+5/30/2025 1:37:12 AM [DEBUG] PrefsKeybinder.cs:140 (.ctor): Constructing TomboyPrefsKeybinder
+5/30/2025 1:37:12 AM [DEBUG]: EnableDisable Called: enabling... True
+5/30/2025 1:37:12 AM [DEBUG]: In BindPreference: /apps/tomboy/global_keybindings/show_note_menu
+5/30/2025 1:37:12 AM [DEBUG]: In Bind: /apps/tomboy/global_keybindings/show_note_menu with default <Alt>F12
+5/30/2025 1:37:12 AM [DEBUG]: Constructing Binding for '/apps/tomboy/global_keybindings/show_note_menu' with default '<Alt>F12'
+5/30/2025 1:37:12 AM [DEBUG]: Binding key '<Alt>F12' for '/apps/tomboy/global_keybindings/show_note_menu'
+5/30/2025 1:37:13 AM [DEBUG]: In Bind: <Alt>F12
+5/30/2025 1:37:13 AM [DEBUG]: About to add notify for '/apps/tomboy/global_keybindings/show_note_menu'
+5/30/2025 1:37:13 AM [DEBUG]: In BindPreference: /apps/tomboy/global_keybindings/open_start_here
+5/30/2025 1:37:13 AM [DEBUG]: In Bind: /apps/tomboy/global_keybindings/open_start_here with default <Alt>F11
+5/30/2025 1:37:13 AM [DEBUG]: Constructing Binding for '/apps/tomboy/global_keybindings/open_start_here' with default '<Alt>F11'
+5/30/2025 1:37:13 AM [DEBUG]: Binding key '<Alt>F11' for '/apps/tomboy/global_keybindings/open_start_here'
+5/30/2025 1:37:13 AM [DEBUG]: In Bind: <Alt>F11
+5/30/2025 1:37:13 AM [DEBUG]: About to add notify for '/apps/tomboy/global_keybindings/open_start_here'
+5/30/2025 1:37:13 AM [DEBUG]: In BindPreference: /apps/tomboy/global_keybindings/create_new_note
+5/30/2025 1:37:13 AM [DEBUG]: In Bind: /apps/tomboy/global_keybindings/create_new_note with default disabled
+5/30/2025 1:37:13 AM [DEBUG]: Constructing Binding for '/apps/tomboy/global_keybindings/create_new_note' with default 'disabled'
+5/30/2025 1:37:13 AM [DEBUG]: About to add notify for '/apps/tomboy/global_keybindings/create_new_note'
+5/30/2025 1:37:13 AM [DEBUG]: In BindPreference: /apps/tomboy/global_keybindings/open_search
+5/30/2025 1:37:13 AM [DEBUG]: In Bind: /apps/tomboy/global_keybindings/open_search with default disabled
+5/30/2025 1:37:13 AM [DEBUG]: Constructing Binding for '/apps/tomboy/global_keybindings/open_search' with default 'disabled'
+5/30/2025 1:37:13 AM [DEBUG]: About to add notify for '/apps/tomboy/global_keybindings/open_search'
+5/30/2025 1:37:13 AM [DEBUG]: In BindPreference: /apps/tomboy/global_keybindings/open_recent_changes
+5/30/2025 1:37:13 AM [DEBUG]: In Bind: /apps/tomboy/global_keybindings/open_recent_changes with default disabled
+5/30/2025 1:37:13 AM [DEBUG]: Constructing Binding for '/apps/tomboy/global_keybindings/open_recent_changes' with default 'disabled'
+5/30/2025 1:37:13 AM [DEBUG]: About to add notify for '/apps/tomboy/global_keybindings/open_recent_changes'
+5/30/2025 1:37:13 AM [DEBUG]: Failed on Gdk.PixBuf with PNG: Failed to open file “/source/tomboy-modern/build/share/icons/tomboy-panel.png”: No such file or directory
+5/30/2025 1:37:13 AM [DEBUG]: Unable to load icon 'tomboy-panel'.
+5/30/2025 1:37:13 AM [DEBUG]: Tooltip: 0
+5/30/2025 1:37:13 AM [DEBUG]: $Visible: True
+5/30/2025 1:37:13 AM [DEBUG] Utils.cs:1192 (StartMainLoop): Starting main loop
+5/30/2025 1:37:14 AM [DEBUG] GnomeApplication.cs:102 (StartMainLoop): Kicking off Gtk main loop...
+5/30/2025 1:37:14 AM [DEBUG] NoteManager.cs:92 (Initialize): Initializing NoteManager...
+5/30/2025 1:37:14 AM [DEBUG]: Initializing Mono.Addins, Tomboy configuration directory: .config/tomboy
