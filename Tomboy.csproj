@@ -71,7 +71,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Tomboy/**" />
+    <Compile Include="Tomboy/**/*.cs" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(OS)' == 'Windows_NT'">

@@ -1,3 +1,6 @@
+// Maarten Jacobs - 2025:
+// This file is retained for historic purposes, but is no longer used.
+
 //
 // SetupDomain.cs
 //  
