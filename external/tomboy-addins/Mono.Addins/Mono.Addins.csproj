@@ -15,6 +15,7 @@
     <Compile Include="Mono.Addins.Description\**\*.cs" />
     <Compile Include="Mono.Addins.Localization\**\*.cs" />
     <Compile Include="Mono.Addins.Serialization\**\*.cs" />
+    <Compile Remove="Mono.Addins.Database\SetupDomain.cs" />
   </ItemGroup>
 
   <ItemGroup>
