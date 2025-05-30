@@ -667,32 +667,78 @@ namespace Mono.Addins
 		
 		void CheckHostAssembly (Assembly asm)
 		{
-			if (AddinDatabase.RunningSetupProcess || asm is System.Reflection.Emit.AssemblyBuilder)
+			if (AddinDatabase.RunningSetupProcess)
 				return;
-			Uri u;
-			if (!Uri.TryCreate (asm.CodeBase, UriKind.Absolute, out u))
+
+			// Guard against dynamic or collectible assemblies that throw on Location access
+			// if (asm.IsDynamic)
+			// 	return;
+
+			string asmFile;
+			try
+			{
+				asmFile = asm.Location;
+			}
+			catch (NotSupportedException)
+			{
+				// Dynamic assemblies, or assemblies loaded from memory
 				return;
-			string asmFile = u.LocalPath;
-			Addin ainfo = Registry.GetAddinForHostAssembly (asmFile);
-			if (ainfo != null && !IsAddinLoaded (ainfo.Id)) {
+			}
+
+			if (string.IsNullOrEmpty(asmFile))
+				return;
+
+			Addin ainfo = Registry.GetAddinForHostAssembly(asmFile);
+			if (ainfo != null && !IsAddinLoaded(ainfo.Id))
+			{
 				AddinDescription adesc = null;
-				try {
+				try
+				{
 					adesc = ainfo.Description;
-				} catch (Exception ex) {
-					defaultProgressStatus.ReportError ("Add-in description could not be loaded.", ex);
 				}
-				if (adesc == null || adesc.FilesChanged ()) {
-					// If the add-in has changed, update the add-in database.
-					// We do it here because once loaded, add-in roots can't be
-					// reloaded like regular add-ins.
-					Registry.Update (null);
-					ainfo = Registry.GetAddinForHostAssembly (asmFile);
+				catch (Exception ex)
+				{
+					defaultProgressStatus.ReportError("Add-in description could not be loaded.", ex);
+				}
+
+				if (adesc == null || adesc.FilesChanged())
+				{
+					Registry.Update(null);
+					ainfo = Registry.GetAddinForHostAssembly(asmFile);
 					if (ainfo == null)
 						return;
 				}
-				LoadAddin (null, ainfo.Id, false);
+
+				LoadAddin(null, ainfo.Id, false);
 			}
 		}
+
+			// if (AddinDatabase.RunningSetupProcess || asm is System.Reflection.Emit.AssemblyBuilder)
+			// 	return;
+			// Uri u;
+			// if (!Uri.TryCreate (asm.CodeBase, UriKind.Absolute, out u))
+			// 	return;
+			// string asmFile = u.LocalPath;
+			// Addin ainfo = Registry.GetAddinForHostAssembly (asmFile);
+			// if (ainfo != null && !IsAddinLoaded (ainfo.Id)) {
+			// 	AddinDescription adesc = null;
+			// 	try {
+			// 		adesc = ainfo.Description;
+			// 	} catch (Exception ex) {
+			// 		defaultProgressStatus.ReportError ("Add-in description could not be loaded.", ex);
+			// 	}
+			// 	if (adesc == null || adesc.FilesChanged ()) {
+			// 		// If the add-in has changed, update the add-in database.
+			// 		// We do it here because once loaded, add-in roots can't be
+			// 		// reloaded like regular add-ins.
+			// 		Registry.Update (null);
+			// 		ainfo = Registry.GetAddinForHostAssembly (asmFile);
+			// 		if (ainfo == null)
+			// 			return;
+			// 	}
+			// 	LoadAddin (null, ainfo.Id, false);
+			// }
+		// }
 		
 		/// <summary>
 		/// Creates a new extension context.
