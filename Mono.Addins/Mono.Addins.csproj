@@ -1,3 +1,8 @@
+<!--
+  Copyright (c) 2025 Maarten Jacobs
+  All rights reserved.
+  This file is part of tomboy-addins and was created specifically for this project.
+-->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -6,6 +11,12 @@
     <AssemblyName>Mono.Addins</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+
+    <BaseOutputPath>$(AddinsOutputDir)</BaseOutputPath>
+    <OutputPath>$(BaseOutputPath)/bin</OutputPath>
+    <IntermediateOutputPath>$(BaseOutputPath)/obj</IntermediateOutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

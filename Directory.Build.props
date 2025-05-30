@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <AddinsOutputDir>$(MSBuildThisFileDirectory)build\</AddinsOutputDir>
+  </PropertyGroup>
+</Project>

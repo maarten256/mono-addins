@@ -817,7 +817,7 @@ namespace Mono.Addins
 			remove { AddinEngine.AddinUnloaded -= value; }
 		}
 		
-		internal static bool CheckAssembliesLoaded (HashSet<string> files)
+		public static bool CheckAssembliesLoaded (HashSet<string> files)
 		{
 			foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies ()) {
 				if (asm is System.Reflection.Emit.AssemblyBuilder)

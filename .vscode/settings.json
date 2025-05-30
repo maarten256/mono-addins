@@ -1,4 +1,0 @@
-{
-    "dotnet.preferCSharpExtension": true,
-    "dotnet.defaultSolution": "Mono.Addins.sln"
-}

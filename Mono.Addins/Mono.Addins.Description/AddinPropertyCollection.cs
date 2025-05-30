@@ -111,7 +111,7 @@ namespace Mono.Addins.Description
 		void RemoveProperty (string name, string locale);
 	}
 	
-	class AddinPropertyCollectionImpl: List<AddinProperty>, AddinPropertyCollection
+	public class AddinPropertyCollectionImpl: List<AddinProperty>, AddinPropertyCollection
 	{
 		public AddinPropertyCollectionImpl ()
 		{

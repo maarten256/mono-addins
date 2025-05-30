@@ -4,6 +4,7 @@
 *.dll
 /mautil/mautil
 /mono-addins.spec
+.vscode
 
 .DS_Store
 
