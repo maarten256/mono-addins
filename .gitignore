@@ -17,3 +17,7 @@ Makefile.in
 /configure
 /install-sh
 /missing
+/obj
+/bin
+**/obj/
+**/bin/
