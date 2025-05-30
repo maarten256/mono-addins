@@ -28,21 +28,43 @@ using System.Collections.Specialized;
 
 namespace Mono.Addins.Database
 {
-	class SetupLocal: ISetupHandler
+	class SetupLocal : ISetupHandler
 	{
-		public void Scan (IProgressStatus monitor, AddinRegistry registry, string scanFolder, string[] filesToIgnore)
+		public void Scan(IProgressStatus monitor, AddinRegistry registry, string scanFolder, string[] filesToIgnore)
 		{
-			AddinRegistry reg = new AddinRegistry (registry.RegistryPath, registry.StartupDirectory, registry.DefaultAddinsFolder, registry.AddinCachePath);
-			reg.CopyExtensionsFrom (registry);
-			StringCollection files = new StringCollection ();
-			for (int n=0; n<filesToIgnore.Length; n++)
-				files.Add (filesToIgnore[n]);
-			reg.ScanFolders (monitor, scanFolder, files);
+			AddinRegistry reg = new AddinRegistry(registry.RegistryPath, registry.StartupDirectory, registry.DefaultAddinsFolder, registry.AddinCachePath);
+			reg.CopyExtensionsFrom(registry);
+			StringCollection files = new StringCollection();
+			for (int n = 0; n < filesToIgnore.Length; n++)
+				files.Add(filesToIgnore[n]);
+			reg.ScanFolders(monitor, scanFolder, files);
+		}
+
+		public void GetAddinDescription(IProgressStatus monitor, AddinRegistry registry, string file, string outFile)
+		{
+			registry.ParseAddin(monitor, file, outFile);
+		}
+	}
+	
+		class ProcessFailedException: Exception
+	{
+		StringCollection progessLog;
+		
+		public ProcessFailedException (StringCollection progessLog): this (progessLog, null)
+		{
 		}
 		
-		public void GetAddinDescription (IProgressStatus monitor, AddinRegistry registry, string file, string outFile)
+		public ProcessFailedException (StringCollection progessLog, Exception ex): base ("Setup process failed.", ex)
 		{
-			registry.ParseAddin (monitor, file, outFile);
+			this.progessLog = progessLog;
+		}
+		
+		public StringCollection ProgessLog {
+			get { return progessLog; }
+		}
+		
+		public string LastLog {
+			get { return progessLog.Count > 0 ? progessLog [progessLog.Count - 1] : ""; }
 		}
 	}
 }
