@@ -12,6 +12,7 @@
     <AssemblyName>Tomboy</AssemblyName>
     <RootNamespace>Tomboy</RootNamespace>
     <ImplicitUsings>false</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
 
     <Configuration>Debug</Configuration>
     <DebugType>full</DebugType>
@@ -32,15 +33,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+<!--
     <Reference Include="Mono.Addins">
       <HintPath>lib/Mono.Addins.dll</HintPath>
     </Reference>
-    <!-- <Reference Include="Mono.Addins.Gui">
+     <Reference Include="Mono.Addins.Gui">
       <HintPath>lib/Mono.Addins.Gui.dll</HintPath>
-    </Reference> -->
+    </Reference>
     <Reference Include="Mono.Addins.Setup">
       <HintPath>lib/Mono.Addins.Setup.dll</HintPath>
     </Reference>
+-->
     <Reference Include="gconf-sharp">
       <HintPath>lib/gconf-sharp.dll</HintPath>
     </Reference>
@@ -55,6 +58,10 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="external\tomboy-addins\Mono.Addins\Mono.Addins.csproj" />
+  </ItemGroup>
+
   <PropertyGroup>
     <DefineConstants>ENABLE_DBUS</DefineConstants>
   </PropertyGroup>
@@ -62,6 +69,10 @@
   <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
     <DefineConstants>WIN32</DefineConstants>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Tomboy/**" />
+  </ItemGroup>
 
   <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
     <Compile Remove="Tomboy/MacApplication.cs" />
