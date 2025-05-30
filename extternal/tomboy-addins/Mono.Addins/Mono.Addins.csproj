@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Mono.Addins</RootNamespace>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Mono.Addins</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Internal\**\*.cs" />
+    <Compile Include="Mono.Addins\**\*.cs" />
+    <Compile Include="Mono.Addins.Database\**\*.cs" />
+    <Compile Include="Mono.Addins.Description\**\*.cs" />
+    <Compile Include="Mono.Addins.Localization\**\*.cs" />
+    <Compile Include="Mono.Addins.Serialization\**\*.cs" />
+    <Compile Remove="Mono.Addins.Database\SetupDomain.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mono.Posix" Version="7.1.0-final.1.21458.1" />
+    <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
+    <PackageReference Include="System.IO.Compression" Version="4.3.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+  </ItemGroup>
+</Project>
